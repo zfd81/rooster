@@ -30,7 +30,7 @@ func bindParams(sql string, arg Params) (string, []interface{}, error) {
 	newSql, err = util.ReplaceByKeyword(newSql, ':', func(index int, start int, end int, content string) (string, error) {
 		val, ok := arg.Get(content)
 		if !ok {
-			return "?", fmt.Errorf("could not find name %s in %#v", content, arg)
+			//return "?", fmt.Errorf("could not find name %s in %#v", content, arg)
 		}
 		params = append(params, val)
 		return "?", nil

@@ -22,11 +22,13 @@ func (r *Rows) SliceScan() ([]interface{}, error) {
 }
 
 // MapScan using this Rows.
-func (r *Rows) MapScan(dest map[string]interface{}) error {
-	if r.Next() {
-		return MapScan(r, dest)
-	}
-	return nil
+func (r *Rows) MapScan() (map[string]interface{}, error) {
+	r.Next()
+	return MapScan(r)
+}
+
+func (r *Rows) MapListScan() ([]map[string]interface{}, error) {
+	return MapListScan(r)
 }
 
 // StructScan a single Row into dest.
@@ -35,6 +37,10 @@ func (r *Rows) StructScan(dest interface{}) error {
 		return StructScan(r, dest)
 	}
 	return nil
+}
+
+func (r *Rows) StructListScan(list interface{}) error {
+	return StructListScan(r, list)
 }
 
 type DB struct {
@@ -166,24 +172,50 @@ func SliceScan(r *Rows) ([]interface{}, error) {
 	return values, r.Err()
 }
 
-func MapScan(r *Rows, dest map[string]interface{}) error {
+func MapScan(r *Rows) (map[string]interface{}, error) {
 	// ignore r.started, since we needn't use reflect for anything.
 	columns, err := r.ColumnTypes()
 	if err != nil {
-		return err
+		return nil, err
 	}
+	m := make(map[string]interface{})
 	values := make([]interface{}, len(columns))
 	for i := range values {
 		values[i] = new(interface{})
 	}
 	err = r.Scan(values...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for i, column := range columns {
-		dest[column.Name()] = value(column.ScanType(), values[i])
+		m[column.Name()] = value(column.ScanType(), values[i])
 	}
-	return r.Err()
+	return m, r.Err()
+}
+
+func MapListScan(r *Rows) ([]map[string]interface{}, error) {
+	// ignore r.started, since we needn't use reflect for anything.
+	columns, err := r.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+	l := make([]map[string]interface{}, 0, 10)
+	for r.Next() {
+		m := make(map[string]interface{})
+		values := make([]interface{}, len(columns))
+		for i := range values {
+			values[i] = new(interface{})
+		}
+		err = r.Scan(values...)
+		if err != nil {
+			return nil, err
+		}
+		for i, column := range columns {
+			m[column.Name()] = value(column.ScanType(), values[i])
+		}
+		l = append(l, m)
+	}
+	return l, r.Err()
 }
 
 func StructScan(r *Rows, dest interface{}) error {
@@ -201,10 +233,10 @@ func StructScan(r *Rows, dest interface{}) error {
 	return err
 }
 
-func StructListScan(r *Rows, dest interface{}) error {
+func StructListScan(r *Rows, list interface{}) error {
 	var v, vp reflect.Value
 
-	value := reflect.ValueOf(dest)
+	value := reflect.ValueOf(list)
 
 	// json.Unmarshal returns errors for these
 	if value.Kind() != reflect.Ptr {
