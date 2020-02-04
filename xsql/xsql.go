@@ -161,18 +161,7 @@ func SliceScan(r *Rows) ([]interface{}, error) {
 		return values, err
 	}
 	for i, column := range columns {
-		switch column.ScanType().String() {
-		case "sql.RawBytes", "mysql.NullTime":
-			values[i] = string((*(values[i].(*interface{}))).([]uint8))
-		case "int64", "sql.NullInt64":
-			if "int64" == reflect.TypeOf(*(values[i].(*interface{}))).String() {
-				values[i] = *(values[i].(*interface{}))
-			} else {
-				values[i] = cast.ToInt(string((*(values[i].(*interface{}))).([]uint8)))
-			}
-		default:
-			values[i] = *(values[i].(*interface{}))
-		}
+		values[i] = value(column.ScanType(), values[i])
 	}
 	return values, r.Err()
 }
@@ -192,18 +181,7 @@ func MapScan(r *Rows, dest map[string]interface{}) error {
 		return err
 	}
 	for i, column := range columns {
-		switch column.ScanType().String() {
-		case "sql.RawBytes", "mysql.NullTime":
-			dest[column.Name()] = string((*(values[i].(*interface{}))).([]uint8))
-		case "int64", "sql.NullInt64":
-			if "int64" == reflect.TypeOf(*(values[i].(*interface{}))).String() {
-				dest[column.Name()] = *(values[i].(*interface{}))
-			} else {
-				dest[column.Name()] = cast.ToInt(string((*(values[i].(*interface{}))).([]uint8)))
-			}
-		default:
-			dest[column.Name()] = *(values[i].(*interface{}))
-		}
+		dest[column.Name()] = value(column.ScanType(), values[i])
 	}
 	return r.Err()
 }
@@ -288,4 +266,19 @@ func wrapFields(v reflect.Value, names []string) []interface{} {
 		}
 	}
 	return values
+}
+
+func value(t reflect.Type, v interface{}) interface{} {
+	switch t.String() {
+	case "sql.RawBytes", "mysql.NullTime":
+		return string((*(v.(*interface{}))).([]uint8))
+	case "int64", "sql.NullInt64":
+		if "int64" == reflect.TypeOf(*(v.(*interface{}))).String() {
+			return *(v.(*interface{}))
+		} else {
+			return cast.ToInt(string((*(v.(*interface{}))).([]uint8)))
+		}
+	default:
+		return *(v.(*interface{}))
+	}
 }

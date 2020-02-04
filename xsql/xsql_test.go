@@ -22,7 +22,7 @@ func TestMapScan(t *testing.T) {
 		t.Error(err)
 	}
 	p := NewParams()
-	p.Add("Name", "admin")
+	p.Add("Name", "tester")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	m := make(map[string]interface{})
 	rows.MapScan(m)
@@ -61,7 +61,7 @@ func TestStructScan(t *testing.T) {
 	t.Log(u.Department_id)
 }
 
-func TestScanAll(t *testing.T) {
+func TestStructListScan(t *testing.T) {
 	db, err := Open("mysql", dsn)
 	if err != nil {
 		t.Error(err)
