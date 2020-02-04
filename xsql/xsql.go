@@ -2,15 +2,12 @@ package xsql
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"errors"
-	"fmt"
+	"github.com/spf13/cast"
 	"github.com/zfd81/rooster/util"
 	"reflect"
+	"strings"
 )
-
-var _scannerInterface = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
-var _valuerInterface = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 
 type Rows struct {
 	*sql.Rows
@@ -18,41 +15,24 @@ type Rows struct {
 
 // SliceScan using this Rows.
 func (r *Rows) SliceScan() ([]interface{}, error) {
-	return SliceScan(r)
+	if r.Next() {
+		return SliceScan(r)
+	}
+	return nil, nil
 }
 
 // MapScan using this Rows.
 func (r *Rows) MapScan(dest map[string]interface{}) error {
-	return MapScan(r, dest)
+	if r.Next() {
+		return MapScan(r, dest)
+	}
+	return nil
 }
 
 // StructScan a single Row into dest.
 func (r *Rows) StructScan(dest interface{}) error {
-	v := reflect.ValueOf(dest)
-
-	if v.Kind() != reflect.Ptr {
-		return errors.New("must pass a pointer, not a value, to StructScan destination")
-	}
-
-	v = v.Elem()
-
-	columns, err := r.Columns()
-	if err != nil {
-		return err
-	}
-
-	t := v.Type()
-	values := make([]interface{}, len(columns))
-	fieldNum := v.NumField()
-	for i := 0; i < fieldNum; i++ {
-		fname := t.Field(i).Name
-		for index, name := range columns {
-			if fname == name {
-				valueOfField := v.FieldByName(name)
-				values[index] = valueOfField.Interface()
-				break
-			}
-		}
+	if r.Next() {
+		return StructScan(r, dest)
 	}
 	return nil
 }
@@ -168,93 +148,144 @@ func (db *DB) Exec(query string, arg Params) (int64, error) {
 
 func SliceScan(r *Rows) ([]interface{}, error) {
 	// ignore r.started, since we needn't use reflect for anything.
-	columns, err := r.Columns()
+	columns, err := r.ColumnTypes()
 	if err != nil {
 		return []interface{}{}, err
 	}
-
 	values := make([]interface{}, len(columns))
 	for i := range values {
 		values[i] = new(interface{})
 	}
-
 	err = r.Scan(values...)
-
 	if err != nil {
 		return values, err
 	}
-
-	for i := range columns {
-		values[i] = *(values[i].(*interface{}))
+	for i, column := range columns {
+		switch column.ScanType().String() {
+		case "sql.RawBytes", "mysql.NullTime":
+			values[i] = string((*(values[i].(*interface{}))).([]uint8))
+		case "int64", "sql.NullInt64":
+			if "int64" == reflect.TypeOf(*(values[i].(*interface{}))).String() {
+				values[i] = *(values[i].(*interface{}))
+			} else {
+				values[i] = cast.ToInt(string((*(values[i].(*interface{}))).([]uint8)))
+			}
+		default:
+			values[i] = *(values[i].(*interface{}))
+		}
 	}
-
 	return values, r.Err()
 }
 
 func MapScan(r *Rows, dest map[string]interface{}) error {
 	// ignore r.started, since we needn't use reflect for anything.
+	columns, err := r.ColumnTypes()
+	if err != nil {
+		return err
+	}
+	values := make([]interface{}, len(columns))
+	for i := range values {
+		values[i] = new(interface{})
+	}
+	err = r.Scan(values...)
+	if err != nil {
+		return err
+	}
+	for i, column := range columns {
+		switch column.ScanType().String() {
+		case "sql.RawBytes", "mysql.NullTime":
+			dest[column.Name()] = string((*(values[i].(*interface{}))).([]uint8))
+		case "int64", "sql.NullInt64":
+			if "int64" == reflect.TypeOf(*(values[i].(*interface{}))).String() {
+				dest[column.Name()] = *(values[i].(*interface{}))
+			} else {
+				dest[column.Name()] = cast.ToInt(string((*(values[i].(*interface{}))).([]uint8)))
+			}
+		default:
+			dest[column.Name()] = *(values[i].(*interface{}))
+		}
+	}
+	return r.Err()
+}
+
+func StructScan(r *Rows, dest interface{}) error {
+	v := reflect.ValueOf(dest)
+	if v.Kind() != reflect.Ptr {
+		return errors.New("must pass a pointer, not a value, to StructScan destination")
+	}
+	v = v.Elem()
+	columns, err := r.Columns()
+	if err != nil {
+		return err
+	}
+	values := wrapFields(v, columns)
+	err = r.Scan(values...)
+	return err
+}
+
+func StructListScan(r *Rows, dest interface{}) error {
+	var v, vp reflect.Value
+
+	value := reflect.ValueOf(dest)
+
+	// json.Unmarshal returns errors for these
+	if value.Kind() != reflect.Ptr {
+		return errors.New("must pass a pointer, not a value, to StructListScan destination")
+	}
+	if value.IsNil() {
+		return errors.New("nil pointer passed to StructListScan destination")
+	}
+	direct := reflect.Indirect(value)
+
+	slice, err := util.BaseType(value.Type(), reflect.Slice)
+	if err != nil {
+		return err
+	}
+	isPtr := slice.Elem().Kind() == reflect.Ptr
+	base := util.Deref(slice.Elem())
+
 	columns, err := r.Columns()
 	if err != nil {
 		return err
 	}
 
-	values := make([]interface{}, len(columns))
-	for i := range values {
-		values[i] = new(interface{})
-	}
-
-	err = r.Scan(values...)
-	if err != nil {
-		return err
-	}
-
-	for i, column := range columns {
-		dest[column] = *(values[i].(*interface{}))
-	}
-
-	return r.Err()
-}
-
-func structOnlyError(t reflect.Type) error {
-	isStruct := t.Kind() == reflect.Struct
-	isScanner := reflect.PtrTo(t).Implements(_scannerInterface)
-	if !isStruct {
-		return fmt.Errorf("expected %s but got %s", reflect.Struct, t.Kind())
-	}
-	if isScanner {
-		return fmt.Errorf("structscan expects a struct dest but the provided struct type %s implements scanner", t.Name())
-	}
-	return fmt.Errorf("expected a struct, but struct %s has no exported fields", t.Name())
-}
-
-func isScannable(t reflect.Type) bool {
-	if reflect.PtrTo(t).Implements(_scannerInterface) {
-		return true
-	}
-	if t.Kind() != reflect.Struct {
-		return true
-	}
-
-	return false
-}
-
-func fieldsByTraversal(v reflect.Value, traversals [][]int, values []interface{}, ptrs bool) error {
-	v = reflect.Indirect(v)
-	if v.Kind() != reflect.Struct {
-		return errors.New("argument not a struct")
-	}
-
-	for i, traversal := range traversals {
-		if len(traversal) == 0 {
-			values[i] = new(interface{})
-			continue
+	for r.Next() {
+		vp = reflect.New(base)
+		v = reflect.Indirect(vp)
+		values := wrapFields(v, columns)
+		err = r.Scan(values...)
+		if err != nil {
+			return err
 		}
-		f := util.FieldByIndexes(v, traversal)
-		if ptrs {
-			values[i] = f.Addr().Interface()
+		if isPtr {
+			direct.Set(reflect.Append(direct, vp))
 		} else {
-			values[i] = f.Interface()
+			direct.Set(reflect.Append(direct, v))
 		}
 	}
 	return nil
+}
+
+func wrapFields(v reflect.Value, names []string) []interface{} {
+	v = reflect.Indirect(v)
+	values := make([]interface{}, len(names))
+	t := v.Type()
+	fieldNum := v.NumField()
+	for index, name := range names {
+		flag := true
+		name = strings.ToLower(name)
+		for i := 0; i < fieldNum; i++ {
+			fname := t.Field(i).Name
+			if strings.ToLower(fname) == name {
+				valueOfField := v.FieldByName(fname)
+				values[index] = valueOfField.Addr().Interface()
+				flag = false
+				break
+			}
+		}
+		if flag {
+			values[index] = new(interface{})
+		}
+	}
+	return values
 }

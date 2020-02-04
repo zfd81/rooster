@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"github.com/zfd81/rooster/errors"
 	"reflect"
 )
@@ -34,19 +35,10 @@ func Deref(t reflect.Type) reflect.Type {
 	return t
 }
 
-// FieldByIndexes returns a value for the field given by the struct traversal
-// for the given value.
-func FieldByIndexes(v reflect.Value, indexes []int) reflect.Value {
-	for _, i := range indexes {
-		v = reflect.Indirect(v).Field(i)
-		// if this is a pointer and it's nil, allocate a new value and set it
-		if v.Kind() == reflect.Ptr && v.IsNil() {
-			alloc := reflect.New(Deref(v.Type()))
-			v.Set(alloc)
-		}
-		if v.Kind() == reflect.Map && v.IsNil() {
-			v.Set(reflect.MakeMap(v.Type()))
-		}
+func BaseType(t reflect.Type, expected reflect.Kind) (reflect.Type, error) {
+	t = Deref(t)
+	if t.Kind() != expected {
+		return nil, fmt.Errorf("expected %s but got %s", expected, t.Kind())
 	}
-	return v
+	return t, nil
 }

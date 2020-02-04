@@ -5,13 +5,16 @@ import (
 )
 
 type User struct {
-	Name string
-	Pwd  string
+	Id            int
+	Name          string
+	Password      string
+	Number        string
+	Department_id int
 }
 
 func Test_bindParams(t *testing.T) {
-	str := "select name from tbale where name=:Name and pwd =:PWD and{} {age>1}"
-	user := &User{"zfd", "456"}
+	str := "select name from tbale where name=:Name and Password =:PWD and{} {age>1}"
+	user := &User{Name: "zfd", Password: "456"}
 	param := NewStructParams(user)
 	str, params, err := bindParams(str, param)
 	t.Log(str)
@@ -23,7 +26,7 @@ func Test_bindParams(t *testing.T) {
 }
 
 func Test_insert(t *testing.T) {
-	user := &User{Name: "zfd", Pwd: "4568"}
+	user := &User{Name: "zfd", Password: "4568"}
 	str, params, err := insert("userInfo", NewStructParams(user))
 	t.Log(str)
 	t.Log(params)
