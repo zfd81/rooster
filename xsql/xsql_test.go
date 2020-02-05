@@ -164,6 +164,30 @@ func TestDB_Save(t *testing.T) {
 	} else {
 		t.Log(cnt)
 	}
+}
+
+func TestDB_Exec(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	//u := &User{85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
+	//cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)", u)
+	//if err != nil {
+	//	t.Log(err)
+	//} else {
+	//	t.Log(cnt)
+	//}
+
+	mp := make(map[string]interface{})
+	mp["name"] = "%7"
+	cnt, err := db.Exec("delete FROM sys_user where name like :name", mp)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
 	rows, _ := db.Query("select * from sys_user", nil)
 	users := make([]User, 0)
 	err = StructListScan(rows, &users)
@@ -172,5 +196,43 @@ func TestDB_Save(t *testing.T) {
 	}
 	for i, u := range users {
 		t.Log(i, u)
+	}
+}
+
+func TestDB_Exec_Ins(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	u := &User{85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
+	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)"
+	cnt, err := db.Exec(sql, u)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+}
+
+func TestDB_Exec_Del(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	mp := make(map[string]interface{})
+	mp["name"] = "%8"
+	cnt, err := db.Exec("delete FROM sys_user where name like :name", mp)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
+	u := &User{Name: "2"}
+	cnt, err = db.Exec("delete FROM sys_user where name like CONCAT('%',:Name)", u)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
 	}
 }

@@ -103,8 +103,8 @@ func (db *DB) Save(table string, arg interface{}) (int64, error) {
 	return num, err
 }
 
-func (db *DB) Exec(query string, arg Params) (int64, error) {
-	sql, params, err := bindParams(query, arg)
+func (db *DB) Exec(query string, arg interface{}) (int64, error) {
+	sql, params, err := bindParams(query, param(arg))
 	if err != nil {
 		return -1, err
 	}
