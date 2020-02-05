@@ -22,14 +22,16 @@ func TestDB_Query(t *testing.T) {
 		t.Log(i, v)
 	}
 	t.Log("-------------------------------------------------------")
-	rows, _ = db.Query("select * from sys_user where name=:Name", p)
+	mp := make(map[string]interface{})
+	mp["Name"] = "admin"
+	rows, _ = db.Query("select * from sys_user where name=:Name", mp)
 	m, _ := rows.MapScan()
 	for k, v := range m {
 		t.Log(k, v, reflect.TypeOf(v).String())
 	}
 	t.Log("-------------------------------------------------------")
-	u := &User{}
-	rows, _ = db.Query("select * from sys_user where name=:Name", p)
+	u := &User{Name: "admin"}
+	rows, _ = db.Query("select * from sys_user where name=:Name", u)
 	rows.StructScan(u)
 	t.Log(u.Name)
 	t.Log(u.Id)
@@ -46,7 +48,8 @@ func TestDB_Query(t *testing.T) {
 	}
 
 	t.Log("-------------------------------------------------------")
-	rows, _ = db.Query("select * from sys_user where name=:Name", p)
+	up := &User{Name: "tester"}
+	rows, _ = db.Query("select * from sys_user where name=:Name", up)
 	users := make([]User, 0)
 	rows.StructListScan(&users)
 	for i, u := range users {
@@ -91,10 +94,8 @@ func TestStructScan(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{}
-	p := NewParams()
-	p.Add("Name", "admin")
-	rows, _ := db.Query("select * from sys_user where name=:Name", p)
+	u := &User{Name: "admin"}
+	rows, _ := db.Query("select * from sys_user where name=:Name", u)
 	if rows.Next() {
 		StructScan(rows, u)
 	}
@@ -131,4 +132,11 @@ func TestMapListScan(t *testing.T) {
 			t.Log(k, v, reflect.TypeOf(v).String())
 		}
 	}
+}
+
+func Test_param(t *testing.T) {
+	u := User{}
+	//users := make([]User, 0)
+	//m := make(map[string]interface{})
+	param(&u)
 }

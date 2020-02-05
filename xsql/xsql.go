@@ -73,8 +73,8 @@ func Connect(driverName, dataSourceName string) (*DB, error) {
 	return db, nil
 }
 
-func (db *DB) Query(query string, arg Params) (*Rows, error) {
-	sql, params, err := bindParams(query, arg)
+func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
+	sql, params, err := bindParams(query, param(arg))
 	if err != nil {
 		return nil, err
 	}
@@ -313,4 +313,30 @@ func value(t reflect.Type, v interface{}) interface{} {
 	default:
 		return *(v.(*interface{}))
 	}
+}
+
+func param(arg interface{}) Params {
+	if arg != nil {
+		value := reflect.ValueOf(arg)
+		if value.Kind() == reflect.Ptr {
+			if value.IsNil() {
+				return NewParams()
+			}
+			value = value.Elem()
+		}
+		if value.Kind() == reflect.Map {
+			p, ok := value.Interface().(Params)
+			if ok {
+				return p
+			}
+			m, ok := value.Interface().(map[string]interface{})
+			if ok {
+				return NewMapParams(m)
+			}
+		}
+		if value.Kind() == reflect.Struct {
+			return NewStructParams(value.Interface())
+		}
+	}
+	return NewParams()
 }
