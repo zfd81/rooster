@@ -171,32 +171,24 @@ func TestDB_Exec(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	//u := &User{85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
-	//cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)", u)
-	//if err != nil {
-	//	t.Log(err)
-	//} else {
-	//	t.Log(cnt)
-	//}
 
-	mp := make(map[string]interface{})
-	mp["name"] = "%7"
-	cnt, err := db.Exec("delete FROM sys_user where name like :name", mp)
+	u := &User{95, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
+	cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)", u)
 	if err != nil {
 		t.Log(err)
 	} else {
 		t.Log(cnt)
 	}
 
-	rows, _ := db.Query("select * from sys_user", nil)
-	users := make([]User, 0)
-	err = StructListScan(rows, &users)
+	mp := make(map[string]interface{})
+	mp["name"] = "%7"
+	cnt, err = db.Exec("delete FROM sys_user where name like :name", mp)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
+	} else {
+		t.Log(cnt)
 	}
-	for i, u := range users {
-		t.Log(i, u)
-	}
+
 }
 
 func TestDB_Exec_Ins(t *testing.T) {
@@ -230,6 +222,24 @@ func TestDB_Exec_Del(t *testing.T) {
 
 	u := &User{Name: "2"}
 	cnt, err = db.Exec("delete FROM sys_user where name like CONCAT('%',:Name)", u)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+}
+
+func TestDB_Exec_Update(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	p := NewParams()
+	p.Add("id", 15)
+	p.Add("modifier", 151)
+	p.Add("Full_name", "用户1")
+	sql := "update sys_user set modifier=:modifier ,full_name=:Full_name where id = :id"
+	cnt, err := db.Exec(sql, p)
 	if err != nil {
 		t.Log(err)
 	} else {
