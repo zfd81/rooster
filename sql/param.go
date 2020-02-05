@@ -1,4 +1,4 @@
-package xsql
+package sql
 
 import (
 	"github.com/zfd81/rooster/util"
