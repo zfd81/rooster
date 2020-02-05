@@ -7,6 +7,7 @@ import (
 	"github.com/zfd81/rooster/util"
 	"reflect"
 	"strings"
+	"time"
 )
 
 type Rows struct {
@@ -85,8 +86,8 @@ func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
 	return &Rows{Rows: r}, err
 }
 
-func (db *DB) Save(table string, arg Params) (int64, error) {
-	sql, params, err := insert(table, arg)
+func (db *DB) Save(table string, arg interface{}) (int64, error) {
+	sql, params, err := insert(table, param(arg))
 	if err != nil {
 		return -1, err
 	}
@@ -302,14 +303,25 @@ func wrapFields(v reflect.Value, names []string) []interface{} {
 
 func value(t reflect.Type, v interface{}) interface{} {
 	switch t.String() {
-	case "sql.RawBytes", "mysql.NullTime":
+	case "sql.RawBytes":
+		if reflect.ValueOf(v).Elem().IsZero() {
+			return ""
+		}
 		return string((*(v.(*interface{}))).([]uint8))
 	case "int64", "sql.NullInt64":
+		if reflect.ValueOf(v).Elem().IsZero() {
+			return 0
+		}
 		if "int64" == reflect.TypeOf(*(v.(*interface{}))).String() {
 			return *(v.(*interface{}))
 		} else {
 			return cast.ToInt(string((*(v.(*interface{}))).([]uint8)))
 		}
+	case "mysql.NullTime":
+		if reflect.ValueOf(v).Elem().IsZero() {
+			return time.Time{}
+		}
+		return *(v.(*interface{}))
 	default:
 		return *(v.(*interface{}))
 	}

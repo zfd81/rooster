@@ -5,9 +5,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"reflect"
 	"testing"
+	"time"
 )
 
-var dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", "root", "123456", "localhost", "hdss")
+var dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true", "root", "123456", "localhost", "hdss")
 
 func TestDB_Query(t *testing.T) {
 	db, err := Open("mysql", dsn)
@@ -63,7 +64,7 @@ func TestMapScan(t *testing.T) {
 		t.Error(err)
 	}
 	p := NewParams()
-	p.Add("Name", "tester")
+	p.Add("Name", "insUser4")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
 		m, _ := MapScan(rows)
@@ -79,10 +80,13 @@ func TestSliceScan(t *testing.T) {
 		t.Error(err)
 	}
 	p := NewParams()
-	p.Add("Name", "admin")
+	p.Add("Name", "insUser4")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
-		arr, _ := SliceScan(rows)
+		arr, err := SliceScan(rows)
+		if err != nil {
+			t.Error(err)
+		}
 		for i, v := range arr {
 			t.Log(i, v)
 		}
@@ -94,15 +98,21 @@ func TestStructScan(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{Name: "admin"}
+	u := &User{Name: "insUser4"}
 	rows, _ := db.Query("select * from sys_user where name=:Name", u)
 	if rows.Next() {
-		StructScan(rows, u)
+		err := StructScan(rows, u)
+		if err != nil {
+			t.Error(err)
+		}
 	}
-	t.Log(u.Name)
-	t.Log(u.Id)
-	t.Log(u.Password)
-	t.Log(u.Department_id)
+	t.Log("Id: ", u.Id)
+	t.Log("Name: ", u.Name)
+	t.Log("Number: ", u.Number)
+	t.Log("Password: ", u.Password)
+	t.Log("Department_id: ", u.Department_id)
+	t.Log("Created_date: ", u.Created_date)
+	t.Log("Lastmodified_date: ", u.Lastmodified_date)
 }
 
 func TestStructListScan(t *testing.T) {
@@ -110,13 +120,14 @@ func TestStructListScan(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p := NewParams()
-	p.Add("Name", "admin")
-	rows, _ := db.Query("select * from sys_user", p)
+	rows, _ := db.Query("select * from sys_user", nil)
 	users := make([]User, 0)
-	StructListScan(rows, &users)
+	err = StructListScan(rows, &users)
+	if err != nil {
+		t.Error(err)
+	}
 	for i, u := range users {
-		t.Log(i, u)
+		t.Log(i, "：", u)
 	}
 }
 
@@ -129,7 +140,7 @@ func TestMapListScan(t *testing.T) {
 	l, _ := MapListScan(rows)
 	for _, m := range l {
 		for k, v := range m {
-			t.Log(k, v, reflect.TypeOf(v).String())
+			t.Log(k, ": ", v)
 		}
 	}
 }
@@ -139,4 +150,27 @@ func Test_param(t *testing.T) {
 	//users := make([]User, 0)
 	//m := make(map[string]interface{})
 	param(&u)
+}
+
+func TestDB_Save(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	u := &User{55, "insUser5", "pwd515", "5115", 51115, time.Now(), time.Now()}
+	cnt, err := db.Save("sys_user", u)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+	rows, _ := db.Query("select * from sys_user", nil)
+	users := make([]User, 0)
+	err = StructListScan(rows, &users)
+	if err != nil {
+		t.Error(err)
+	}
+	for i, u := range users {
+		t.Log(i, u)
+	}
 }

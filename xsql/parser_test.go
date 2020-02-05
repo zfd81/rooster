@@ -2,14 +2,17 @@ package xsql
 
 import (
 	"testing"
+	"time"
 )
 
 type User struct {
-	Id            int
-	Name          string
-	Password      string
-	Number        string
-	Department_id int
+	Id                int
+	Name              string
+	Password          string
+	Number            string
+	Department_id     int
+	Created_date      time.Time
+	Lastmodified_date time.Time
 }
 
 func Test_bindParams(t *testing.T) {
