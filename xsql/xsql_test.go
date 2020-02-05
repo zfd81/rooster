@@ -264,11 +264,42 @@ func TestDB_Exec_Update(t *testing.T) {
 	}
 }
 
+func TestDB_QueryForSlice(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//Map作为参数查询
+	mp := make(map[string]interface{})
+	mp["Name"] = "admin"
+	s, err := db.QueryForSlice("select * from sys_user where name=:Name", mp)
+	if err != nil {
+		t.Error(err)
+	}
+	for i, v := range s {
+		t.Log(i, v)
+	}
+
+	t.Log("---------------------------------------------------------------")
+
+	//类作为参数查询
+	u := &User{Name: "tester"}
+	s, err = db.QueryForSlice("select * from sys_user where name=:Name", u)
+	if err != nil {
+		t.Error(err)
+	}
+	for i, v := range s {
+		t.Log(i, v)
+	}
+}
+
 func TestDB_QueryForMap(t *testing.T) {
 	db, err := Open("mysql", dsn)
 	if err != nil {
 		t.Error(err)
 	}
+
 	//Map作为参数查询
 	mp := make(map[string]interface{})
 	mp["Name"] = "admin"
@@ -279,7 +310,9 @@ func TestDB_QueryForMap(t *testing.T) {
 	for k, v := range m {
 		t.Log(k, v)
 	}
+
 	t.Log("---------------------------------------------------------------")
+
 	//单一参数查询
 	m, err = db.QueryForMap("select * from sys_user where name=:val", "tester")
 	if err != nil {
@@ -287,5 +320,21 @@ func TestDB_QueryForMap(t *testing.T) {
 	}
 	for k, v := range m {
 		t.Log(k, v)
+	}
+}
+
+func TestDB_QueryForMapList(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//空参数查询
+	l, err := db.QueryForMapList("select * from sys_user", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	for _, m := range l {
+		t.Log(m)
 	}
 }

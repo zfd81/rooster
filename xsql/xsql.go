@@ -90,12 +90,28 @@ func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
 	return &Rows{Rows: r}, err
 }
 
+func (db *DB) QueryForSlice(query string, arg interface{}) ([]interface{}, error) {
+	rows, err := db.Query(query, arg)
+	if err != nil {
+		return nil, err
+	}
+	return rows.SliceScan()
+}
+
 func (db *DB) QueryForMap(query string, arg interface{}) (map[string]interface{}, error) {
 	rows, err := db.Query(query, arg)
 	if err != nil {
 		return nil, err
 	}
 	return rows.MapScan()
+}
+
+func (db *DB) QueryForMapList(query string, arg interface{}) ([]map[string]interface{}, error) {
+	rows, err := db.Query(query, arg)
+	if err != nil {
+		return nil, err
+	}
+	return rows.MapListScan()
 }
 
 func (db *DB) Save(table string, arg interface{}) (int64, error) {
