@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+const (
+	SingleParameterName string = "val"
+)
+
 type Rows struct {
 	*sql.Rows
 }
@@ -348,6 +352,12 @@ func param(arg interface{}) Params {
 		}
 		if value.Kind() == reflect.Struct {
 			return NewStructParams(value.Interface())
+		}
+
+		if value.Kind() == reflect.String || value.Kind() == reflect.Int || value.Kind() == reflect.Int64 {
+			p := NewParams()
+			p.Add(SingleParameterName, value.Interface())
+			return p
 		}
 	}
 	return NewParams()

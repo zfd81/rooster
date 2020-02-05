@@ -157,7 +157,7 @@ func TestDB_Save(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{55, "insUser5", "pwd515", "5115", 51115, time.Now(), time.Now()}
+	u := &User{55, "用户5", "pwd515", "5115", 51115, time.Now(), time.Now()}
 	cnt, err := db.Save("sys_user", u)
 	if err != nil {
 		t.Log(err)
@@ -172,7 +172,7 @@ func TestDB_Exec(t *testing.T) {
 		t.Error(err)
 	}
 
-	u := &User{95, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
+	u := &User{85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
 	cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)", u)
 	if err != nil {
 		t.Log(err)
@@ -212,7 +212,7 @@ func TestDB_Exec_Del(t *testing.T) {
 		t.Error(err)
 	}
 	mp := make(map[string]interface{})
-	mp["name"] = "%8"
+	mp["name"] = "%7"
 	cnt, err := db.Exec("delete FROM sys_user where name like :name", mp)
 	if err != nil {
 		t.Log(err)
@@ -227,6 +227,23 @@ func TestDB_Exec_Del(t *testing.T) {
 	} else {
 		t.Log(cnt)
 	}
+
+	//参数类型为整型
+	cnt, err = db.Exec("delete FROM sys_user where id=:val", 55)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
+	//参数类型为字符串
+	cnt, err = db.Exec("delete FROM sys_user where name=:val", "用户8")
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
 }
 
 func TestDB_Exec_Update(t *testing.T) {
