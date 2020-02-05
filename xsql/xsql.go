@@ -90,6 +90,14 @@ func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
 	return &Rows{Rows: r}, err
 }
 
+func (db *DB) QueryForMap(query string, arg interface{}) (map[string]interface{}, error) {
+	rows, err := db.Query(query, arg)
+	if err != nil {
+		return nil, err
+	}
+	return rows.MapScan()
+}
+
 func (db *DB) Save(table string, arg interface{}) (int64, error) {
 	sql, params, err := insert(table, param(arg))
 	if err != nil {

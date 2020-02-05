@@ -263,3 +263,29 @@ func TestDB_Exec_Update(t *testing.T) {
 		t.Log(cnt)
 	}
 }
+
+func TestDB_QueryForMap(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	//Map作为参数查询
+	mp := make(map[string]interface{})
+	mp["Name"] = "admin"
+	m, err := db.QueryForMap("select * from sys_user where name=:Name", mp)
+	if err != nil {
+		t.Error(err)
+	}
+	for k, v := range m {
+		t.Log(k, v)
+	}
+	t.Log("---------------------------------------------------------------")
+	//单一参数查询
+	m, err = db.QueryForMap("select * from sys_user where name=:val", "tester")
+	if err != nil {
+		t.Error(err)
+	}
+	for k, v := range m {
+		t.Log(k, v)
+	}
+}
