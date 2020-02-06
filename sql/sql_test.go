@@ -211,6 +211,8 @@ func TestDB_Exec_Del(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	//模糊查询用法一：将百分号%写在变量值中
 	mp := make(map[string]interface{})
 	mp["name"] = "%7"
 	cnt, err := db.Exec("delete FROM sys_user where name like :name", mp)
@@ -220,6 +222,7 @@ func TestDB_Exec_Del(t *testing.T) {
 		t.Log(cnt)
 	}
 
+	//模糊查询用法二：用字符串连接函数将百分号%和变量进行连接
 	u := &User{Name: "2"}
 	cnt, err = db.Exec("delete FROM sys_user where name like CONCAT('%',:Name)", u)
 	if err != nil {
