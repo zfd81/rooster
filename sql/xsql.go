@@ -114,6 +114,14 @@ func (db *DB) QueryForMapList(query string, arg interface{}) ([]map[string]inter
 	return rows.MapListScan()
 }
 
+func (db *DB) QueryForStruct(dest interface{}, query string, arg interface{}) error {
+	rows, err := db.Query(query, arg)
+	if err != nil {
+		return err
+	}
+	return rows.StructScan(dest)
+}
+
 func (db *DB) Save(table string, arg interface{}) (int64, error) {
 	sql, params, err := insert(table, param(arg))
 	if err != nil {

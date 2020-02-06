@@ -338,3 +338,42 @@ func TestDB_QueryForMapList(t *testing.T) {
 		t.Log(m)
 	}
 }
+
+func TestDB_QueryForStruct(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//Map作为参数查询
+	mp := make(map[string]interface{})
+	mp["Name"] = "admin"
+	u := &User{}
+	err = db.QueryForStruct(u, "select * from sys_user where name=:Name", mp)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log("Id: ", u.Id)
+	t.Log("Name: ", u.Name)
+	t.Log("Number: ", u.Number)
+	t.Log("Password: ", u.Password)
+	t.Log("Department_id: ", u.Department_id)
+	t.Log("Created_date: ", u.Created_date)
+	t.Log("Lastmodified_date: ", u.Lastmodified_date)
+
+	t.Log("---------------------------------------------------------------")
+
+	//对象作为参数查询
+	u1 := &User{Name: "tester"}
+	err = db.QueryForStruct(u1, "select * from sys_user where name=:Name", u1)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log("Id: ", u1.Id)
+	t.Log("Name: ", u1.Name)
+	t.Log("Number: ", u1.Number)
+	t.Log("Password: ", u1.Password)
+	t.Log("Department_id: ", u1.Department_id)
+	t.Log("Created_date: ", u1.Created_date)
+	t.Log("Lastmodified_date: ", u1.Lastmodified_date)
+}
