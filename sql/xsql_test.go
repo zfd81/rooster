@@ -377,3 +377,19 @@ func TestDB_QueryForStruct(t *testing.T) {
 	t.Log("Created_date: ", u1.Created_date)
 	t.Log("Lastmodified_date: ", u1.Lastmodified_date)
 }
+
+func TestDB_QueryForStructList(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var users []User
+	err = db.QueryForStructList(&users, "select * from sys_user", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	for i, u := range users {
+		t.Log(i, u)
+	}
+}
