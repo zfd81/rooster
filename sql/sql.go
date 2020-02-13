@@ -3,15 +3,21 @@ package sql
 import (
 	"database/sql"
 	"errors"
-	"github.com/spf13/cast"
-	"github.com/zfd81/rooster/util"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/spf13/cast"
+	"github.com/zfd81/rooster/conf"
+	"github.com/zfd81/rooster/util"
 )
 
 const (
 	SingleParameterName string = "val"
+)
+
+var (
+	config = conf.GetGlobalConfig()
 )
 
 type Rows struct {
@@ -106,8 +112,12 @@ func (db *DB) QueryForMap(query string, arg interface{}) (map[string]interface{}
 	return rows.MapScan()
 }
 
-func (db *DB) QueryForMapList(query string, arg interface{}) ([]map[string]interface{}, error) {
-	rows, err := db.Query(query, arg)
+func (db *DB) QueryForMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]map[string]interface{}, error) {
+	sql, err := pagesql(db.driverName, query, pageNumber, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(sql, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -401,4 +411,23 @@ func param(arg interface{}) Params {
 		}
 	}
 	return NewParams()
+}
+
+func pagesql(driverName string, sql string, pageNumber int, pageSize int) (string, error) {
+	sql = config.PageSql(driverName, sql)
+	env := map[string]interface{}{
+		"_pageNumber": pageNumber,
+		"_pageSize":   pageSize,
+	}
+	newSql, err := util.ReplaceBetween(sql, "${", "}", func(index int, start int, end int, content string) (string, error) {
+		val, err := util.ExprParsing(env, strings.TrimSpace(content))
+		if err != nil {
+			return content, err
+		}
+		return cast.ToString(val), nil
+	})
+	if err != nil {
+		return sql, err
+	}
+	return newSql, nil
 }

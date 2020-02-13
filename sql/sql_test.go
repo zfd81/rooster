@@ -2,10 +2,11 @@ package sql
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"reflect"
 	"testing"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true", "root", "123456", "localhost", "hdss")
@@ -157,7 +158,7 @@ func TestDB_Save(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{55, "用户5", "pwd515", "5115", 51115, time.Now(), time.Now()}
+	u := &User{59, "用户9", "pwd515", "5115", 51115, time.Now(), time.Now()}
 	cnt, err := db.Save("sys_user", u)
 	if err != nil {
 		t.Log(err)
@@ -333,7 +334,7 @@ func TestDB_QueryForMapList(t *testing.T) {
 	}
 
 	//空参数查询
-	l, err := db.QueryForMapList("select * from sys_user", nil)
+	l, err := db.QueryForMapList("select * from sys_user", nil, 1, 4)
 	if err != nil {
 		t.Error(err)
 	}
