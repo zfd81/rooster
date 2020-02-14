@@ -389,7 +389,7 @@ func TestDB_QueryForStructList(t *testing.T) {
 	}
 
 	var users []User
-	err = db.QueryForStructList(&users, "select * from sys_user", nil)
+	err = db.QueryForStructList(&users, "select * from sys_user", nil, 1, 4)
 	if err != nil {
 		t.Error(err)
 	}

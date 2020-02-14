@@ -132,8 +132,12 @@ func (db *DB) QueryForStruct(dest interface{}, query string, arg interface{}) er
 	return rows.StructScan(dest)
 }
 
-func (db *DB) QueryForStructList(list interface{}, query string, arg interface{}) error {
-	rows, err := db.Query(query, arg)
+func (db *DB) QueryForStructList(list interface{}, query string, arg interface{}, pageNumber int, pageSize int) error {
+	sql, err := pagesql(db.driverName, query, pageNumber, pageSize)
+	if err != nil {
+		return err
+	}
+	rows, err := db.Query(sql, arg)
 	if err != nil {
 		return err
 	}
