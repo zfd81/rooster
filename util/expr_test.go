@@ -1,8 +1,9 @@
 package util
 
 import (
-	"github.com/spf13/cast"
 	"testing"
+
+	"github.com/spf13/cast"
 )
 
 func TestExprParsing(t *testing.T) {

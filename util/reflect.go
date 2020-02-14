@@ -2,8 +2,9 @@ package util
 
 import (
 	"fmt"
-	"github.com/zfd81/rooster/errors"
 	"reflect"
+
+	"github.com/zfd81/rooster/errors"
 )
 
 type IteratorFunc func(index int, key string, value interface{})

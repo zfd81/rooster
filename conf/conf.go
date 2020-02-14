@@ -42,10 +42,10 @@ var defaultConf = Config{
 			"select * from ($sql) _init limit ${(_pageNumber - 1) * _pageSize} , ${_pageSize}",
 		},
 		Oracle: &PageSql{
-			"select * from ( select rownum num,init.* from ($sql) init where rownum <= ${_pageNumber * _pageSize}) where num > ${(_pageNumber - 1) * _pageSize}",
+			"select * from ( select rownum num,_init.* from ($sql) _init where rownum <= ${_pageNumber * _pageSize}) where num > ${(_pageNumber - 1) * _pageSize}",
 		},
 		PostgreSQL: &PageSql{
-			"select * from ($sql) init limit ${_pageSize} offset ${(_pageNumber - 1) * _pageSize}",
+			"select * from ($sql) _init limit ${_pageSize} offset ${(_pageNumber - 1) * _pageSize}",
 		},
 	},
 }
