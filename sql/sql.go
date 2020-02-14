@@ -96,7 +96,7 @@ func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
 	return &Rows{Rows: r}, err
 }
 
-func (db *DB) QueryForSlice(query string, arg interface{}) ([]interface{}, error) {
+func (db *DB) QuerySlice(query string, arg interface{}) ([]interface{}, error) {
 	rows, err := db.Query(query, arg)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (db *DB) QueryForSlice(query string, arg interface{}) ([]interface{}, error
 	return rows.SliceScan()
 }
 
-func (db *DB) QueryForMap(query string, arg interface{}) (map[string]interface{}, error) {
+func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, error) {
 	rows, err := db.Query(query, arg)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (db *DB) QueryForMap(query string, arg interface{}) (map[string]interface{}
 	return rows.MapScan()
 }
 
-func (db *DB) QueryForMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]map[string]interface{}, error) {
+func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]map[string]interface{}, error) {
 	sql, err := pagesql(db.driverName, query, pageNumber, pageSize)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (db *DB) QueryForMapList(query string, arg interface{}, pageNumber int, pag
 	return rows.MapListScan()
 }
 
-func (db *DB) QueryForStruct(dest interface{}, query string, arg interface{}) error {
+func (db *DB) QueryStruct(dest interface{}, query string, arg interface{}) error {
 	rows, err := db.Query(query, arg)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (db *DB) QueryForStruct(dest interface{}, query string, arg interface{}) er
 	return rows.StructScan(dest)
 }
 
-func (db *DB) QueryForStructList(list interface{}, query string, arg interface{}, pageNumber int, pageSize int) error {
+func (db *DB) QueryStructList(list interface{}, query string, arg interface{}, pageNumber int, pageSize int) error {
 	sql, err := pagesql(db.driverName, query, pageNumber, pageSize)
 	if err != nil {
 		return err

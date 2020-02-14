@@ -277,7 +277,7 @@ func TestDB_QueryForSlice(t *testing.T) {
 	//Map作为参数查询
 	mp := make(map[string]interface{})
 	mp["Name"] = "admin"
-	s, err := db.QueryForSlice("select * from sys_user where name=:Name", mp)
+	s, err := db.QuerySlice("select * from sys_user where name=:Name", mp)
 	if err != nil {
 		t.Error(err)
 	}
@@ -289,7 +289,7 @@ func TestDB_QueryForSlice(t *testing.T) {
 
 	//类作为参数查询
 	u := &User{Name: "tester"}
-	s, err = db.QueryForSlice("select * from sys_user where name=:Name", u)
+	s, err = db.QuerySlice("select * from sys_user where name=:Name", u)
 	if err != nil {
 		t.Error(err)
 	}
@@ -307,7 +307,7 @@ func TestDB_QueryForMap(t *testing.T) {
 	//Map作为参数查询
 	mp := make(map[string]interface{})
 	mp["Name"] = "admin"
-	m, err := db.QueryForMap("select * from sys_user where name=:Name", mp)
+	m, err := db.QueryMap("select * from sys_user where name=:Name", mp)
 	if err != nil {
 		t.Error(err)
 	}
@@ -318,7 +318,7 @@ func TestDB_QueryForMap(t *testing.T) {
 	t.Log("---------------------------------------------------------------")
 
 	//单一参数查询
-	m, err = db.QueryForMap("select * from sys_user where name=:val", "tester")
+	m, err = db.QueryMap("select * from sys_user where name=:val", "tester")
 	if err != nil {
 		t.Error(err)
 	}
@@ -334,7 +334,7 @@ func TestDB_QueryForMapList(t *testing.T) {
 	}
 
 	//空参数查询
-	l, err := db.QueryForMapList("select * from sys_user", nil, 1, 4)
+	l, err := db.QueryMapList("select * from sys_user", nil, 1, 4)
 	if err != nil {
 		t.Error(err)
 	}
@@ -353,7 +353,7 @@ func TestDB_QueryForStruct(t *testing.T) {
 	mp := make(map[string]interface{})
 	mp["Name"] = "admin"
 	u := &User{}
-	err = db.QueryForStruct(u, "select * from sys_user where name=:Name", mp)
+	err = db.QueryStruct(u, "select * from sys_user where name=:Name", mp)
 	if err != nil {
 		t.Error(err)
 	}
@@ -369,7 +369,7 @@ func TestDB_QueryForStruct(t *testing.T) {
 
 	//对象作为参数查询
 	u1 := &User{Name: "tester"}
-	err = db.QueryForStruct(u1, "select * from sys_user where name=:Name", u1)
+	err = db.QueryStruct(u1, "select * from sys_user where name=:Name", u1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -389,7 +389,7 @@ func TestDB_QueryForStructList(t *testing.T) {
 	}
 
 	var users []User
-	err = db.QueryForStructList(&users, "select * from sys_user", nil, 1, 4)
+	err = db.QueryStructList(&users, "select * from sys_user", nil, 1, 4)
 	if err != nil {
 		t.Error(err)
 	}
