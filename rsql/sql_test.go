@@ -113,7 +113,7 @@ func TestStructScan(t *testing.T) {
 	t.Log("Password: ", u.Password)
 	t.Log("Department_id: ", u.Department_id)
 	t.Log("Created_date: ", u.Created_date)
-	t.Log("Lastmodified_date: ", u.Lastmodified_date)
+	t.Log("Lastmodified_date: ", u.Lastmodifieddate)
 }
 
 func TestStructListScan(t *testing.T) {
@@ -158,7 +158,7 @@ func TestDB_Save(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{59, "用户9", "pwd515", "5115", 51115, time.Now(), time.Now()}
+	u := &User{60, "用户10", "pwd515", "5115", 51115, time.Now(), time.Now()}
 	cnt, err := db.Save("sys_user", u)
 	if err != nil {
 		t.Log(err)
@@ -363,7 +363,7 @@ func TestDB_QueryForStruct(t *testing.T) {
 	t.Log("Password: ", u.Password)
 	t.Log("Department_id: ", u.Department_id)
 	t.Log("Created_date: ", u.Created_date)
-	t.Log("Lastmodified_date: ", u.Lastmodified_date)
+	t.Log("Lastmodified_date: ", u.Lastmodifieddate)
 
 	t.Log("---------------------------------------------------------------")
 
@@ -379,7 +379,7 @@ func TestDB_QueryForStruct(t *testing.T) {
 	t.Log("Password: ", u1.Password)
 	t.Log("Department_id: ", u1.Department_id)
 	t.Log("Created_date: ", u1.Created_date)
-	t.Log("Lastmodified_date: ", u1.Lastmodified_date)
+	t.Log("Lastmodified_date: ", u1.Lastmodifieddate)
 }
 
 func TestDB_QueryForStructList(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	TagName             string = "rsql"
 	SingleParameterName string = "val"
 )
 
@@ -341,8 +342,13 @@ func wrapFields(v reflect.Value, names []string) []interface{} {
 		flag := true
 		name = strings.ToLower(name)
 		for i := 0; i < fieldNum; i++ {
-			fname := t.Field(i).Name
-			if strings.ToLower(fname) == name {
+			field := t.Field(i)
+			tname := field.Tag.Get(TagName)
+			fname := field.Name
+			if tname == "" {
+				tname = fname
+			}
+			if strings.ToLower(tname) == name {
 				valueOfField := v.FieldByName(fname)
 				values[index] = valueOfField.Addr().Interface()
 				flag = false
@@ -358,12 +364,12 @@ func wrapFields(v reflect.Value, names []string) []interface{} {
 
 func value(t reflect.Type, v interface{}) interface{} {
 	switch t.String() {
-	case "rsql.RawBytes":
+	case "sql.RawBytes":
 		if reflect.ValueOf(v).Elem().IsZero() {
 			return ""
 		}
 		return string((*(v.(*interface{}))).([]uint8))
-	case "int64", "rsql.NullInt64":
+	case "int64", "sql.NullInt64":
 		if reflect.ValueOf(v).Elem().IsZero() {
 			return 0
 		}

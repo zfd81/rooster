@@ -6,13 +6,13 @@ import (
 )
 
 type User struct {
-	Id                int
-	Name              string
-	Password          string
-	Number            string
-	Department_id     int
-	Created_date      time.Time
-	Lastmodified_date time.Time
+	Id               int
+	Name             string
+	Password         string
+	Number           string
+	Department_id    int
+	Created_date     time.Time
+	Lastmodifieddate time.Time `rsql:"Lastmodified_date"`
 }
 
 func Test_bindParams(t *testing.T) {

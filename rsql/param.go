@@ -1,6 +1,8 @@
 package rsql
 
 import (
+	"reflect"
+
 	"github.com/zfd81/rooster/util"
 )
 
@@ -73,8 +75,13 @@ func NewMapParams(params map[string]interface{}) Params {
 
 func NewStructParams(params interface{}) Params {
 	newParams := make(map[string]interface{})
-	util.StructIterator(params, func(index int, key string, value interface{}) {
-		newParams[key] = value
+	util.StructIterator(params, func(index int, key string, value interface{}, tag reflect.StructTag) {
+		tname := tag.Get(TagName)
+		if tname != "" {
+			newParams[tname] = value
+		} else {
+			newParams[key] = value
+		}
 	})
 	return newParams
 }
