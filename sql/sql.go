@@ -212,7 +212,6 @@ func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 // }
 
 func SliceScan(r *Rows) ([]interface{}, error) {
-	// ignore r.started, since we needn't use reflect for anything.
 	columns, err := r.ColumnTypes()
 	if err != nil {
 		return []interface{}{}, err
@@ -232,19 +231,18 @@ func SliceScan(r *Rows) ([]interface{}, error) {
 }
 
 func MapScan(r *Rows) (map[string]interface{}, error) {
-	// ignore r.started, since we needn't use reflect for anything.
+	m := make(map[string]interface{})
 	columns, err := r.ColumnTypes()
 	if err != nil {
-		return nil, err
+		return m, err
 	}
-	m := make(map[string]interface{})
 	values := make([]interface{}, len(columns))
 	for i := range values {
 		values[i] = new(interface{})
 	}
 	err = r.Scan(values...)
 	if err != nil {
-		return nil, err
+		return m, err
 	}
 	for i, column := range columns {
 		m[column.Name()] = value(column.ScanType(), values[i])
@@ -253,12 +251,11 @@ func MapScan(r *Rows) (map[string]interface{}, error) {
 }
 
 func MapListScan(r *Rows) ([]map[string]interface{}, error) {
-	// ignore r.started, since we needn't use reflect for anything.
+	l := make([]map[string]interface{}, 0, 10)
 	columns, err := r.ColumnTypes()
 	if err != nil {
-		return nil, err
+		return l, err
 	}
-	l := make([]map[string]interface{}, 0, 10)
 	for r.Next() {
 		m := make(map[string]interface{})
 		values := make([]interface{}, len(columns))
@@ -267,7 +264,7 @@ func MapListScan(r *Rows) ([]map[string]interface{}, error) {
 		}
 		err = r.Scan(values...)
 		if err != nil {
-			return nil, err
+			return l, err
 		}
 		for i, column := range columns {
 			m[column.Name()] = value(column.ScanType(), values[i])

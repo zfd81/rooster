@@ -65,7 +65,7 @@ func TestMapScan(t *testing.T) {
 		t.Error(err)
 	}
 	p := NewParams()
-	p.Add("Name", "insUser4")
+	p.Add("Name", "admin")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
 		m, _ := MapScan(rows)
@@ -81,7 +81,7 @@ func TestSliceScan(t *testing.T) {
 		t.Error(err)
 	}
 	p := NewParams()
-	p.Add("Name", "insUser4")
+	p.Add("Name", "admin")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
 		arr, err := SliceScan(rows)
