@@ -1,4 +1,4 @@
-package sql
+package rsql
 
 import (
 	"database/sql"
@@ -61,7 +61,7 @@ type DB struct {
 	unsafe         bool
 }
 
-// Open is the same as sql.Open, but returns an *rooster.xsql.DB instead.
+// Open is the same as rsql.Open, but returns an *rooster.rsql.DB instead.
 func Open(driverName, dataSourceName string) (*DB, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
@@ -179,11 +179,11 @@ func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 }
 
 //func (db *DB) XExec(query string, param Paramer) (int64, error) {
-//	sql, args, err := bindParams(query, param)
+//	rsql, args, err := bindParams(query, param)
 //	if err != nil {
 //		return -1, err
 //	}
-//	stmt, err := db.Prepare(sql)
+//	stmt, err := db.Prepare(rsql)
 //	defer stmt.Close()
 //	if err != nil {
 //		return -1, err
@@ -196,19 +196,19 @@ func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 //	return num, err
 //}
 
-// func (db *DB) Execute(query string, arg interface{}) (sql.Result, error) {
-// 	var sql string
+// func (db *DB) Execute(query string, arg interface{}) (rsql.Result, error) {
+// 	var rsql string
 // 	var arglist []interface{}
 // 	var err error
 // 	if maparg, ok := arg.(map[string]interface{}); ok {
-// 		sql, arglist, err = bindMap(query, maparg)
+// 		rsql, arglist, err = bindMap(query, maparg)
 // 	} else {
-// 		// sql, arglist, err = bindStruct(query, maparg)
+// 		// rsql, arglist, err = bindStruct(query, maparg)
 // 	}
 // 	if err != nil {
 // 		return nil, err
 // 	}
-// 	return db.Exec(sql, arglist...)
+// 	return db.Exec(rsql, arglist...)
 // }
 
 func SliceScan(r *Rows) ([]interface{}, error) {
@@ -358,12 +358,12 @@ func wrapFields(v reflect.Value, names []string) []interface{} {
 
 func value(t reflect.Type, v interface{}) interface{} {
 	switch t.String() {
-	case "sql.RawBytes":
+	case "rsql.RawBytes":
 		if reflect.ValueOf(v).Elem().IsZero() {
 			return ""
 		}
 		return string((*(v.(*interface{}))).([]uint8))
-	case "int64", "sql.NullInt64":
+	case "int64", "rsql.NullInt64":
 		if reflect.ValueOf(v).Elem().IsZero() {
 			return 0
 		}

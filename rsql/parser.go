@@ -1,8 +1,9 @@
-package sql
+package rsql
 
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/zfd81/rooster/errors"
 	"github.com/zfd81/rooster/util"
 )

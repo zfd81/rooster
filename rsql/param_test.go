@@ -1,4 +1,4 @@
-package sql
+package rsql
 
 import (
 	"testing"
