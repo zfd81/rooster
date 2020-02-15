@@ -6,6 +6,7 @@ import (
 )
 
 type User struct {
+	AA               string `rsql:"-"`
 	Id               int
 	Name             string
 	Password         string

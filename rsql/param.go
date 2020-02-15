@@ -77,10 +77,10 @@ func NewStructParams(params interface{}) Params {
 	newParams := make(map[string]interface{})
 	util.StructIterator(params, func(index int, key string, value interface{}, tag reflect.StructTag) {
 		tname := tag.Get(TagName)
-		if tname != "" {
-			newParams[tname] = value
-		} else {
+		if tname == "" {
 			newParams[key] = value
+		} else if tname != "-" {
+			newParams[tname] = value
 		}
 	})
 	return newParams

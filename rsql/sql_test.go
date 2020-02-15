@@ -158,7 +158,7 @@ func TestDB_Save(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{60, "用户10", "pwd515", "5115", 51115, time.Now(), time.Now()}
+	u := &User{"aa", 61, "用户11", "pwd515", "5115", 51115, time.Now(), time.Now()}
 	cnt, err := db.Save("sys_user", u)
 	if err != nil {
 		t.Log(err)
@@ -173,7 +173,7 @@ func TestDB_Exec(t *testing.T) {
 		t.Error(err)
 	}
 
-	u := &User{85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
+	u := &User{"aa", 85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
 	cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)", u)
 	if err != nil {
 		t.Log(err)
@@ -197,7 +197,7 @@ func TestDB_Exec_Ins(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
+	u := &User{"aa", 85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
 	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)"
 	cnt, err := db.Exec(sql, u)
 	if err != nil {
