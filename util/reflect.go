@@ -7,7 +7,7 @@ import (
 	"github.com/zfd81/rooster/errors"
 )
 
-type IteratorFunc func(index int, key string, value interface{}, tag reflect.StructTag)
+type IteratorFunc func(index int, key string, value interface{}, field reflect.StructField)
 
 func StructIterator(arg interface{}, iterator IteratorFunc) error {
 	if arg == nil {
@@ -23,7 +23,7 @@ func StructIterator(arg interface{}, iterator IteratorFunc) error {
 		return errors.ErrParamType
 	}
 	for i := 0; i < valueOfArg.NumField(); i++ {
-		iterator(i, typeOfArg.Field(i).Name, valueOfArg.Field(i).Interface(), typeOfArg.Field(i).Tag)
+		iterator(i, typeOfArg.Field(i).Name, valueOfArg.Field(i).Interface(), typeOfArg.Field(i))
 	}
 	return nil
 }

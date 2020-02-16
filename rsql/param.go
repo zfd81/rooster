@@ -6,11 +6,14 @@ import (
 	"github.com/zfd81/rooster/util"
 )
 
+const (
+	SingleParameterName string = "val"
+)
+
 type Params map[string]interface{}
 
-func (p Params) Get(name string) (interface{}, bool) {
-	val, ok := p[name]
-	return val, ok
+func (p Params) Get(name string) interface{} {
+	return p[name]
 }
 
 func (p Params) Add(name string, value interface{}) Params {
@@ -62,7 +65,32 @@ func (p Params) Clone() Params {
 	return p2
 }
 
-func NewParams() Params {
+func NewParams(arg interface{}) Params {
+	if arg != nil {
+		value := reflect.ValueOf(arg)
+		if value.Kind() == reflect.Ptr {
+			if value.IsNil() {
+				return make(Params)
+			}
+			value = value.Elem()
+		}
+		if value.Kind() == reflect.Map {
+			p, ok := value.Interface().(Params)
+			if ok {
+				return p
+			}
+			m, ok := value.Interface().(map[string]interface{})
+			if ok {
+				return NewMapParams(m)
+			}
+		}
+		if value.Kind() == reflect.Struct {
+			return NewStructParams(value.Interface())
+		}
+		if value.Kind() == reflect.String || value.Kind() == reflect.Int || value.Kind() == reflect.Int64 {
+			return NewSingleParams(value.Interface())
+		}
+	}
 	return make(Params)
 }
 
@@ -74,14 +102,15 @@ func NewMapParams(params map[string]interface{}) Params {
 }
 
 func NewStructParams(params interface{}) Params {
-	newParams := make(map[string]interface{})
-	util.StructIterator(params, func(index int, key string, value interface{}, tag reflect.StructTag) {
-		tname := tag.Get(TagName)
-		if tname == "" {
-			newParams[key] = value
-		} else if tname != "-" {
-			newParams[tname] = value
-		}
+	p := make(map[string]interface{})
+	util.StructIterator(params, func(index int, key string, value interface{}, field reflect.StructField) {
+		p[key] = value
 	})
-	return newParams
+	return p
+}
+
+func NewSingleParams(param interface{}) Params {
+	p := make(Params)
+	p.Add(SingleParameterName, param)
+	return p
 }

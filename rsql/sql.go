@@ -12,11 +12,6 @@ import (
 	"github.com/zfd81/rooster/util"
 )
 
-const (
-	TagName             string = "rsql"
-	SingleParameterName string = "val"
-)
-
 var (
 	config = conf.GetGlobalConfig()
 )
@@ -86,7 +81,7 @@ func Connect(driverName, dataSourceName string) (*DB, error) {
 }
 
 func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
-	sql, params, err := bindParams(query, param(arg))
+	sql, params, err := bindParams(query, NewParams(arg))
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +141,7 @@ func (db *DB) QueryStructList(list interface{}, query string, arg interface{}, p
 }
 
 func (db *DB) Save(table string, arg interface{}) (int64, error) {
-	sql, params, err := insert(table, param(arg))
+	sql, params, err := insert(table, arg)
 	if err != nil {
 		return -1, err
 	}
@@ -163,7 +158,7 @@ func (db *DB) Save(table string, arg interface{}) (int64, error) {
 }
 
 func (db *DB) Exec(query string, arg interface{}) (int64, error) {
-	sql, params, err := bindParams(query, param(arg))
+	sql, params, err := bindParams(query, NewParams(arg))
 	if err != nil {
 		return -1, err
 	}
@@ -343,16 +338,18 @@ func wrapFields(v reflect.Value, names []string) []interface{} {
 		name = strings.ToLower(name)
 		for i := 0; i < fieldNum; i++ {
 			field := t.Field(i)
-			tname := field.Tag.Get(TagName)
-			fname := field.Name
-			if tname == "" {
-				tname = fname
-			}
-			if strings.ToLower(tname) == name {
-				valueOfField := v.FieldByName(fname)
-				values[index] = valueOfField.Addr().Interface()
-				flag = false
-				break
+			f := NewField(&field)
+			if f.NotIgnore() {
+				aname := f.AttrName()
+				if aname == "" {
+					aname = f.Name
+				}
+				if strings.ToLower(aname) == name {
+					valueOfField := v.FieldByName(f.Name)
+					values[index] = valueOfField.Addr().Interface()
+					flag = false
+					break
+				}
 			}
 		}
 		if flag {
@@ -386,38 +383,6 @@ func value(t reflect.Type, v interface{}) interface{} {
 	default:
 		return *(v.(*interface{}))
 	}
-}
-
-func param(arg interface{}) Params {
-	if arg != nil {
-		value := reflect.ValueOf(arg)
-		if value.Kind() == reflect.Ptr {
-			if value.IsNil() {
-				return NewParams()
-			}
-			value = value.Elem()
-		}
-		if value.Kind() == reflect.Map {
-			p, ok := value.Interface().(Params)
-			if ok {
-				return p
-			}
-			m, ok := value.Interface().(map[string]interface{})
-			if ok {
-				return NewMapParams(m)
-			}
-		}
-		if value.Kind() == reflect.Struct {
-			return NewStructParams(value.Interface())
-		}
-
-		if value.Kind() == reflect.String || value.Kind() == reflect.Int || value.Kind() == reflect.Int64 {
-			p := NewParams()
-			p.Add(SingleParameterName, value.Interface())
-			return p
-		}
-	}
-	return NewParams()
 }
 
 func pagesql(driverName string, sql string, pageNumber int, pageSize int) (string, error) {

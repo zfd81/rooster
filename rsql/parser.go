@@ -3,6 +3,7 @@ package rsql
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 
 	"github.com/zfd81/rooster/errors"
 	"github.com/zfd81/rooster/util"
@@ -12,8 +13,7 @@ func bindParams(sql string, arg Params) (string, []interface{}, error) {
 	newSql, err := util.ReplaceBetween(sql, "{", "}", func(index int, start int, end int, content string) (string, error) {
 		ignore := false
 		fragment, err := util.ReplaceByKeyword(content, ':', func(i int, s int, e int, c string) (string, error) {
-			_, ok := arg.Get(c)
-			if !ok {
+			if arg.Get(c) == nil {
 				ignore = true
 				return "", nil
 			}
@@ -29,42 +29,77 @@ func bindParams(sql string, arg Params) (string, []interface{}, error) {
 	}
 	params := make([]interface{}, 0, 20)
 	newSql, err = util.ReplaceByKeyword(newSql, ':', func(index int, start int, end int, content string) (string, error) {
-		val, ok := arg.Get(content)
-		if !ok {
-			//return "?", fmt.Errorf("could not find name %s in %#v", content, arg)
-		}
+		val := arg.Get(content)
 		params = append(params, val)
 		return "?", nil
 	})
 	return newSql, params, err
 }
 
-func insert(table string, arg Params) (string, []interface{}, error) {
+func insert(table string, arg interface{}) (string, []interface{}, error) {
 	if table == "" || arg == nil {
 		return "", nil, errors.ErrParamNotNil
 	}
-	if arg.Size() < 1 {
-		return "", nil, errors.ErrParamEmpty
+
+	typeOfArg := reflect.TypeOf(arg)
+	if typeOfArg.Kind() == reflect.Ptr {
+		typeOfArg = typeOfArg.Elem()
 	}
+
 	var sql bytes.Buffer
 	var sql2 bytes.Buffer
+	params := make([]interface{}, 0, 20)
+	flag := 0 //标识
+
 	sql.WriteString("insert into ")
 	sql.WriteString(table)
 	sql.WriteString(" (")
 	sql2.WriteString(") values (")
-	params := make([]interface{}, 0, 20)
-	index := 0
-	arg.Iterator(func(key string, value interface{}) {
-		if index == 0 {
-			index++
-		} else {
-			sql.WriteString(",")
-			sql2.WriteString(",")
+
+	if typeOfArg.Kind() == reflect.Struct {
+		p := NewStructParams(arg)
+		if p.Size() < 1 {
+			return "", nil, errors.ErrParamEmpty
 		}
-		sql.WriteString(string(key))
-		sql2.WriteString("?")
-		params = append(params, value)
-	})
+		for i := 0; i < typeOfArg.NumField(); i++ {
+			field := typeOfArg.Field(i)
+			f := NewField(&field)
+			if f.NotIgnore() {
+				if flag == 0 {
+					flag++
+				} else {
+					sql.WriteString(",")
+					sql2.WriteString(",")
+				}
+				name := f.AttrName()
+				if name == "" {
+					name = f.Name
+				}
+				sql.WriteString(name)
+				sql2.WriteString("?")
+				params = append(params, p.Get(f.Name))
+			}
+		}
+	}
+
+	if typeOfArg.Kind() == reflect.Map {
+		p := NewMapParams(arg.(map[string]interface{}))
+		if p.Size() < 1 {
+			return "", nil, errors.ErrParamEmpty
+		}
+		p.Iterator(func(key string, value interface{}) {
+			if flag == 0 {
+				flag++
+			} else {
+				sql.WriteString(",")
+				sql2.WriteString(",")
+			}
+			sql.WriteString(string(key))
+			sql2.WriteString("?")
+			params = append(params, value)
+		})
+	}
+
 	sql.WriteString(sql2.String())
 	sql.WriteString(")")
 	return sql.String(), params, nil

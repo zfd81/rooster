@@ -9,6 +9,22 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+type User struct {
+	Id               int //没有注解，表示名称和数据库中的列名相同
+	Name             string
+	Password         string
+	FullName         string `rsql:"name:full_name"` //标注数据表中对应的列名称
+	Number           string
+	DepartmentId     int `rsql:"name:department_id"` //标注数据表中对应的列名称
+	Creator          int
+	CreatedDate      time.Time `rsql:"name:created_date"` //标注数据表中对应的列名称
+	Modifier         int
+	LastmodifiedDate time.Time `rsql:"name:lastmodified_date"` //标注数据表中对应的列名称
+	Field1           string    `rsql:"-"`                      //忽略这个字段
+	Field2           int       `rsql:"-"`                      //忽略这个字段
+	Field3           time.Time `rsql:"-"`                      //忽略这个字段
+}
+
 var dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true", "root", "123456", "localhost", "hdss")
 
 func TestDB_Query(t *testing.T) {
@@ -16,41 +32,60 @@ func TestDB_Query(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p := NewParams()
+
+	t.Log("查询参数为Params类型>>>>>>>>>>>>>>>>>>>>>>>")
+	p := make(Params)
 	p.Add("Name", "tester")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
-	arr, _ := rows.SliceScan()
+	arr, err := rows.SliceScan()
+	if err != nil {
+		t.Error(err)
+	}
 	for i, v := range arr {
 		t.Log(i, v)
 	}
-	t.Log("-------------------------------------------------------")
+
+	t.Log("查询参数为map类型>>>>>>>>>>>>>>>>>>>>>>>")
 	mp := make(map[string]interface{})
 	mp["Name"] = "admin"
 	rows, _ = db.Query("select * from sys_user where name=:Name", mp)
-	m, _ := rows.MapScan()
+	m, err := rows.MapScan()
+	if err != nil {
+		t.Error(err)
+	}
 	for k, v := range m {
 		t.Log(k, v, reflect.TypeOf(v).String())
 	}
-	t.Log("-------------------------------------------------------")
+
+	t.Log("查询参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
 	u := &User{Name: "admin"}
 	rows, _ = db.Query("select * from sys_user where name=:Name", u)
-	rows.StructScan(u)
-	t.Log(u.Name)
-	t.Log(u.Id)
-	t.Log(u.Password)
-	t.Log(u.Department_id)
+	err = rows.StructScan(u)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(u)
 
-	t.Log("-------------------------------------------------------")
+	t.Log("查询参数只有一个，而且为string或int类型，变量名为val>>>>>>>>>>>>>>>>>>>>>>>")
+	rows, _ = db.Query("select * from sys_user where name=:val", "admin")
+	err = rows.StructScan(u)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(u)
+
+	t.Log("查询参数为空值nil>>>>>>>>>>>>>>>>>>>>>>>")
 	rows, _ = db.Query("select * from sys_user", nil)
-	l, _ := rows.MapListScan()
-	for _, m := range l {
-		for k, v := range m {
-			t.Log(k, v, reflect.TypeOf(v).String())
-		}
+	l, err := rows.MapListScan()
+	if err != nil {
+		t.Error(err)
+	}
+	for i, m := range l {
+		t.Log(i, m)
 	}
 
-	t.Log("-------------------------------------------------------")
-	up := &User{Name: "tester"}
+	t.Log("查询参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
+	up := &User{Name: "admin"}
 	rows, _ = db.Query("select * from sys_user where name=:Name", up)
 	users := make([]User, 0)
 	rows.StructListScan(&users)
@@ -64,7 +99,7 @@ func TestMapScan(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p := NewParams()
+	p := make(Params)
 	p.Add("Name", "admin")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
@@ -80,7 +115,7 @@ func TestSliceScan(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p := NewParams()
+	p := NewParams(nil)
 	p.Add("Name", "admin")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
@@ -107,13 +142,7 @@ func TestStructScan(t *testing.T) {
 			t.Error(err)
 		}
 	}
-	t.Log("Id: ", u.Id)
-	t.Log("Name: ", u.Name)
-	t.Log("Number: ", u.Number)
-	t.Log("Password: ", u.Password)
-	t.Log("Department_id: ", u.Department_id)
-	t.Log("Created_date: ", u.Created_date)
-	t.Log("Lastmodified_date: ", u.Lastmodifieddate)
+	t.Log(u)
 }
 
 func TestStructListScan(t *testing.T) {
@@ -146,20 +175,48 @@ func TestMapListScan(t *testing.T) {
 	}
 }
 
-func Test_param(t *testing.T) {
-	u := User{}
-	//users := make([]User, 0)
-	//m := make(map[string]interface{})
-	param(&u)
-}
-
 func TestDB_Save(t *testing.T) {
 	db, err := Open("mysql", dsn)
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{"aa", 61, "用户11", "pwd515", "5115", 51115, time.Now(), time.Now()}
+
+	t.Log("参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
+	u := &User{
+		Id:               23,
+		Name:             "user23",
+		Password:         "pwd23",
+		FullName:         "用户23",
+		Number:           "num23",
+		DepartmentId:     1023,
+		Creator:          1,
+		CreatedDate:      time.Now(),
+		Modifier:         1,
+		LastmodifiedDate: time.Now(),
+		Field1:           "test",
+		Field2:           999,
+	}
 	cnt, err := db.Save("sys_user", u)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
+	t.Log("参数为map类型>>>>>>>>>>>>>>>>>>>>>>>")
+	mp := map[string]interface{}{
+		"Id":                25,
+		"Name":              "user25",
+		"Password":          "pwd25",
+		"full_name":         "用户25",
+		"Number":            "num25",
+		"department_id":     1025,
+		"Creator":           1,
+		"created_date":      time.Now(),
+		"Modifier":          1,
+		"lastmodified_date": time.Now(),
+	}
+	cnt, err = db.Save("sys_user", mp)
 	if err != nil {
 		t.Log(err)
 	} else {
@@ -172,9 +229,19 @@ func TestDB_Exec(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	u := &User{"aa", 85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
-	cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)", u)
+	u := &User{
+		Id:               26,
+		Name:             "user26",
+		Password:         "pwd26",
+		FullName:         "用户26",
+		Number:           "num26",
+		DepartmentId:     1026,
+		Creator:          1,
+		CreatedDate:      time.Now(),
+		Modifier:         1,
+		LastmodifiedDate: time.Now(),
+	}
+	cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:CreatedDate,:LastmodifiedDate,:Name,:Number,:Password,:DepartmentId)", u)
 	if err != nil {
 		t.Log(err)
 	} else {
@@ -182,7 +249,7 @@ func TestDB_Exec(t *testing.T) {
 	}
 
 	mp := make(map[string]interface{})
-	mp["name"] = "%7"
+	mp["name"] = "%26"
 	cnt, err = db.Exec("delete FROM sys_user where name like :name", mp)
 	if err != nil {
 		t.Log(err)
@@ -197,8 +264,16 @@ func TestDB_Exec_Ins(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{"aa", 85, "用户8", "pwd715", "7115", 61115, time.Now(), time.Now()}
-	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:Created_date,:Lastmodified_date,:Name,:Number,:Password,:Department_id)"
+	u := &User{
+		Id:               23,
+		Name:             "user23",
+		Password:         "pwd23",
+		Number:           "num23",
+		DepartmentId:     1023,
+		CreatedDate:      time.Now(),
+		LastmodifiedDate: time.Now(),
+	}
+	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:CreatedDate,:LastmodifiedDate,:Name,:Number,:Password,:DepartmentId)"
 	cnt, err := db.Exec(sql, u)
 	if err != nil {
 		t.Log(err)
@@ -224,7 +299,7 @@ func TestDB_Exec_Del(t *testing.T) {
 	}
 
 	//模糊查询用法二：用字符串连接函数将百分号%和变量进行连接
-	u := &User{Name: "2"}
+	u := &User{Name: "8"}
 	cnt, err = db.Exec("delete FROM sys_user where name like CONCAT('%',:Name)", u)
 	if err != nil {
 		t.Log(err)
@@ -233,7 +308,7 @@ func TestDB_Exec_Del(t *testing.T) {
 	}
 
 	//参数类型为整型
-	cnt, err = db.Exec("delete FROM sys_user where id=:val", 55)
+	cnt, err = db.Exec("delete FROM sys_user where id=:val", 23)
 	if err != nil {
 		t.Log(err)
 	} else {
@@ -241,7 +316,7 @@ func TestDB_Exec_Del(t *testing.T) {
 	}
 
 	//参数类型为字符串
-	cnt, err = db.Exec("delete FROM sys_user where name=:val", "用户8")
+	cnt, err = db.Exec("delete FROM sys_user where full_name=:val", "用户25")
 	if err != nil {
 		t.Log(err)
 	} else {
@@ -255,7 +330,7 @@ func TestDB_Exec_Update(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p := NewParams()
+	p := make(Params)
 	p.Add("id", 15)
 	p.Add("modifier", 151)
 	p.Add("Full_name", "用户1")
@@ -357,13 +432,7 @@ func TestDB_QueryForStruct(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log("Id: ", u.Id)
-	t.Log("Name: ", u.Name)
-	t.Log("Number: ", u.Number)
-	t.Log("Password: ", u.Password)
-	t.Log("Department_id: ", u.Department_id)
-	t.Log("Created_date: ", u.Created_date)
-	t.Log("Lastmodified_date: ", u.Lastmodifieddate)
+	t.Log(u)
 
 	t.Log("---------------------------------------------------------------")
 
@@ -373,13 +442,8 @@ func TestDB_QueryForStruct(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log("Id: ", u1.Id)
-	t.Log("Name: ", u1.Name)
-	t.Log("Number: ", u1.Number)
-	t.Log("Password: ", u1.Password)
-	t.Log("Department_id: ", u1.Department_id)
-	t.Log("Created_date: ", u1.Created_date)
-	t.Log("Lastmodified_date: ", u1.Lastmodifieddate)
+	t.Log(u1)
+
 }
 
 func TestDB_QueryForStructList(t *testing.T) {

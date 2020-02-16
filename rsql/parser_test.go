@@ -2,19 +2,7 @@ package rsql
 
 import (
 	"testing"
-	"time"
 )
-
-type User struct {
-	AA               string `rsql:"-"`
-	Id               int
-	Name             string
-	Password         string
-	Number           string
-	Department_id    int
-	Created_date     time.Time
-	Lastmodifieddate time.Time `rsql:"Lastmodified_date"`
-}
 
 func Test_bindParams(t *testing.T) {
 	str := "select name from tbale where name=:Name and Password =:PWD and{} {age>1}"
