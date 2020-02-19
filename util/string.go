@@ -168,3 +168,46 @@ func IndexOf(str string, substr string, fromIndex int) int {
 	}
 	return fromIndex + index
 }
+
+func ToUnderscore(str string) string {
+	strLen := len(str)
+	buffer := make([]byte, 0, strLen+5)
+	flag := true
+	for i := 0; i < strLen; i++ {
+		var b byte = str[i]
+		if i > 0 && b >= 'A' && b <= 'Z' {
+			if str[i-1] != '_' && flag {
+				buffer = append(buffer, '_')
+				b += 32
+				flag = false
+			}
+			buffer = append(buffer, b)
+		} else {
+			buffer = append(buffer, b)
+			flag = true
+		}
+	}
+	return string(buffer)
+}
+
+func ToCamelCase(str string) string {
+	strLen := len(str)
+	buffer := make([]byte, 0, strLen)
+	flag := false
+	limit := strLen - 1
+	for i := 0; i < strLen; i++ {
+		var b byte = str[i]
+		if b == '_' && i > 0 && i < limit && !flag { //第一位和最后一位的"_"不做处理
+			flag = true
+		} else {
+			if flag == true || i == 0 {
+				if bool(b >= 'a' && b <= 'z') { //首字母大写
+					b -= 32
+					flag = false
+				}
+			}
+			buffer = append(buffer, b)
+		}
+	}
+	return string(buffer)
+}
