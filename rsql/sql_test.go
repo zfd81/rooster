@@ -116,7 +116,7 @@ func TestSliceScan(t *testing.T) {
 		t.Error(err)
 	}
 	p := NewParams(nil)
-	p.Add("Name", "admin")
+	p.Add("Name", "user25")
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
 		arr, err := SliceScan(rows)
@@ -134,7 +134,7 @@ func TestStructScan(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{Name: "insUser4"}
+	u := &User{Name: "user23"}
 	rows, _ := db.Query("select * from sys_user where name=:Name", u)
 	if rows.Next() {
 		err := StructScan(rows, u)
@@ -205,16 +205,16 @@ func TestDB_Save(t *testing.T) {
 
 	t.Log("参数为map类型>>>>>>>>>>>>>>>>>>>>>>>")
 	mp := map[string]interface{}{
-		"Id":                25,
-		"Name":              "user25",
-		"Password":          "pwd25",
-		"full_name":         "用户25",
-		"Number":            "num25",
-		"department_id":     1025,
-		"Creator":           1,
-		"created_date":      time.Now(),
-		"Modifier":          1,
-		"lastmodified_date": time.Now(),
+		"Id":        25,
+		"Name":      "user25",
+		"Password":  "pwd25",
+		"full_name": "用户25",
+		"Number":    "num25",
+		//"department_id":     1025,
+		//"Creator":           1,
+		//"created_date":      time.Now(),
+		//"Modifier":          1,
+		//"lastmodified_date": time.Now(),
 	}
 	cnt, err = db.Save("sys_user", mp)
 	if err != nil {

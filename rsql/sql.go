@@ -276,12 +276,49 @@ func StructScan(r *Rows, dest interface{}) error {
 		return errors.New("must pass a pointer, not a value, to StructScan destination")
 	}
 	v = v.Elem()
+
+	nameMapping := map[string]int{}
+	t := v.Type()
+	fieldNum := t.NumField()
+	for i := 0; i < fieldNum; i++ {
+		field := t.Field(i)
+		f := NewField(&field)
+		if f.NotIgnore() {
+			name := f.AttrName()
+			if name == "" {
+				name = f.Name
+			}
+			nameMapping[strings.ToLower(name)] = i
+		}
+	}
+
 	columns, err := r.Columns()
 	if err != nil {
 		return err
 	}
-	values := wrapFields(v, columns)
+
+	values := make([]interface{}, len(columns))
+	for i := range values {
+		values[i] = new(interface{})
+	}
 	err = r.Scan(values...)
+
+	for i, column := range columns {
+		index := nameMapping[strings.ToLower(column)]
+		f := v.Field(index)
+		if !reflect.ValueOf(values[i]).Elem().IsZero() {
+			switch f.Kind() {
+			case reflect.String:
+				f.SetString(cast.ToString(values[i]))
+			case reflect.Int:
+				f.SetInt(cast.ToInt64(values[i]))
+			case reflect.Bool:
+				f.SetBool(cast.ToBool(values[i]))
+			case reflect.Struct:
+				f.Set(reflect.ValueOf(cast.ToTime(values[i])))
+			}
+		}
+	}
 	return err
 }
 
