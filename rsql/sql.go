@@ -140,8 +140,19 @@ func (db *DB) QueryStructList(list interface{}, query string, arg interface{}, p
 	return rows.StructListScan(list)
 }
 
-func (db *DB) Save(table string, arg interface{}) (int64, error) {
-	sql, params, err := insert(table, arg)
+func (db *DB) Save(arg interface{}, table ...string) (int64, error) {
+	tableName := ""
+	if len(table) > 0 {
+		tableName = table[0]
+	} else {
+		model, ok := arg.(Modeler)
+		if ok {
+			tableName = model.TableName()
+		} else {
+			return 0, errors.New("must pass a Model to Save destination")
+		}
+	}
+	sql, params, err := insert(tableName, arg)
 	if err != nil {
 		return -1, err
 	}

@@ -15,6 +15,10 @@ const (
 	AttrName                = "name"
 )
 
+type Modeler interface {
+	TableName() string
+}
+
 type Field struct {
 	*reflect.StructField
 	ignore     bool

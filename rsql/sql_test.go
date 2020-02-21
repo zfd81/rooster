@@ -25,6 +25,26 @@ type User struct {
 	Field3           time.Time `rsql:"-"`                      //忽略这个字段
 }
 
+func (u User) TableName() string {
+	return "sys_user"
+}
+
+type UserInfo struct {
+	Id               int //没有注解，表示名称和数据库中的列名相同
+	Name             string
+	Password         string
+	FullName         string `rsql:"name:full_name"` //标注数据表中对应的列名称
+	Number           string
+	DepartmentId     int `rsql:"name:department_id"` //标注数据表中对应的列名称
+	Creator          int
+	CreatedDate      time.Time `rsql:"name:created_date"` //标注数据表中对应的列名称
+	Modifier         int
+	LastmodifiedDate time.Time `rsql:"name:lastmodified_date"` //标注数据表中对应的列名称
+	Field1           string    `rsql:"-"`                      //忽略这个字段
+	Field2           int       `rsql:"-"`                      //忽略这个字段
+	Field3           time.Time `rsql:"-"`                      //忽略这个字段
+}
+
 var dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true", "root", "123456", "localhost", "hdss")
 
 func TestDB_Query(t *testing.T) {
@@ -181,8 +201,30 @@ func TestDB_Save(t *testing.T) {
 		t.Error(err)
 	}
 
-	t.Log("参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
+	t.Log("参数为实现Modeler接口的struct类型>>>>>>>>>>>>>>>>>>>>>>>")
 	u := &User{
+		Id:               22,
+		Name:             "user22",
+		Password:         "pwd22",
+		FullName:         "用户22",
+		Number:           "num22",
+		DepartmentId:     1022,
+		Creator:          1,
+		CreatedDate:      time.Now(),
+		Modifier:         1,
+		LastmodifiedDate: time.Now(),
+		Field1:           "test",
+		Field2:           999,
+	}
+	cnt, err := db.Save(u)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
+	t.Log("参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
+	ui := &UserInfo{
 		Id:               23,
 		Name:             "user23",
 		Password:         "pwd23",
@@ -196,7 +238,7 @@ func TestDB_Save(t *testing.T) {
 		Field1:           "test",
 		Field2:           999,
 	}
-	cnt, err := db.Save("sys_user", u)
+	cnt, err = db.Save(ui, "sys_user")
 	if err != nil {
 		t.Log(err)
 	} else {
@@ -205,18 +247,18 @@ func TestDB_Save(t *testing.T) {
 
 	t.Log("参数为map类型>>>>>>>>>>>>>>>>>>>>>>>")
 	mp := map[string]interface{}{
-		"Id":        25,
-		"Name":      "user25",
-		"Password":  "pwd25",
-		"full_name": "用户25",
-		"Number":    "num25",
-		//"department_id":     1025,
-		//"Creator":           1,
-		//"created_date":      time.Now(),
-		//"Modifier":          1,
-		//"lastmodified_date": time.Now(),
+		"Id":                25,
+		"Name":              "user25",
+		"Password":          "pwd25",
+		"full_name":         "用户25",
+		"Number":            "num25",
+		"department_id":     1025,
+		"Creator":           1,
+		"created_date":      time.Now(),
+		"Modifier":          1,
+		"lastmodified_date": time.Now(),
 	}
-	cnt, err = db.Save("sys_user", mp)
+	cnt, err = db.Save(mp, "sys_user")
 	if err != nil {
 		t.Log(err)
 	} else {
