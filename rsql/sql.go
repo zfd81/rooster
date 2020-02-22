@@ -149,7 +149,7 @@ func (db *DB) Save(arg interface{}, table ...string) (int64, error) {
 		if ok {
 			tableName = model.TableName()
 		} else {
-			return 0, errors.New("must pass a Model to Save destination")
+			return 0, errors.New("Please enter the table name")
 		}
 	}
 	sql, params, err := insert(tableName, arg)
@@ -288,20 +288,7 @@ func StructScan(r *Rows, dest interface{}) error {
 	}
 	v = v.Elem()
 
-	nameMapping := map[string]int{}
-	t := v.Type()
-	fieldNum := t.NumField()
-	for i := 0; i < fieldNum; i++ {
-		field := t.Field(i)
-		f := NewField(&field)
-		if f.NotIgnore() {
-			name := f.AttrName()
-			if name == "" {
-				name = f.Name
-			}
-			nameMapping[strings.ToLower(name)] = i
-		}
-	}
+	nameMapping := GetNameMapping(v.Type())
 
 	columns, err := r.Columns()
 	if err != nil {
@@ -312,7 +299,11 @@ func StructScan(r *Rows, dest interface{}) error {
 	for i := range values {
 		values[i] = new(interface{})
 	}
+
 	err = r.Scan(values...)
+	if err != nil {
+		return err
+	}
 
 	for i, column := range columns {
 		index := nameMapping[strings.ToLower(column)]

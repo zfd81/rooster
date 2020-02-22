@@ -65,3 +65,20 @@ func NewField(field *reflect.StructField) *Field {
 	}
 	return f
 }
+
+func GetNameMapping(t reflect.Type) map[string]int {
+	nameMapping := map[string]int{}
+	fieldNum := t.NumField()
+	for i := 0; i < fieldNum; i++ {
+		field := t.Field(i)
+		f := NewField(&field)
+		if f.NotIgnore() {
+			name := f.AttrName()
+			if name == "" {
+				name = f.Name
+			}
+			nameMapping[strings.ToLower(name)] = i
+		}
+	}
+	return nameMapping
+}
