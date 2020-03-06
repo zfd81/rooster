@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zfd81/rooster/types/container"
+
 	"github.com/spf13/cast"
 	"github.com/zfd81/rooster/conf"
 	"github.com/zfd81/rooster/util"
@@ -29,12 +31,12 @@ func (r *Rows) SliceScan() ([]interface{}, error) {
 }
 
 // MapScan using this Rows.
-func (r *Rows) MapScan() (map[string]interface{}, error) {
+func (r *Rows) MapScan() (container.Map, error) {
 	r.Next()
 	return MapScan(r)
 }
 
-func (r *Rows) MapListScan() ([]map[string]interface{}, error) {
+func (r *Rows) MapListScan() ([]container.Map, error) {
 	return MapListScan(r)
 }
 
@@ -100,7 +102,7 @@ func (db *DB) QuerySlice(query string, arg interface{}) ([]interface{}, error) {
 	return rows.SliceScan()
 }
 
-func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, error) {
+func (db *DB) QueryMap(query string, arg interface{}) (container.Map, error) {
 	rows, err := db.Query(query, arg)
 	if err != nil {
 		return nil, err
@@ -108,7 +110,7 @@ func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, e
 	return rows.MapScan()
 }
 
-func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]map[string]interface{}, error) {
+func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]container.Map, error) {
 	sql, err := pagesql(db.driverName, query, pageNumber, pageSize)
 	if err != nil {
 		return nil, err
@@ -237,8 +239,8 @@ func SliceScan(r *Rows) ([]interface{}, error) {
 	return values, r.Err()
 }
 
-func MapScan(r *Rows) (map[string]interface{}, error) {
-	m := make(map[string]interface{})
+func MapScan(r *Rows) (container.Map, error) {
+	m := make(container.HashMap)
 	columns, err := r.ColumnTypes()
 	if err != nil {
 		return m, err
@@ -252,19 +254,19 @@ func MapScan(r *Rows) (map[string]interface{}, error) {
 		return m, err
 	}
 	for i, column := range columns {
-		m[column.Name()] = value(column.ScanType(), values[i])
+		m.Put(column.Name(), value(column.ScanType(), values[i]))
 	}
 	return m, r.Err()
 }
 
-func MapListScan(r *Rows) ([]map[string]interface{}, error) {
-	l := make([]map[string]interface{}, 0, 10)
+func MapListScan(r *Rows) ([]container.Map, error) {
+	l := make([]container.Map, 0, 10)
 	columns, err := r.ColumnTypes()
 	if err != nil {
 		return l, err
 	}
 	for r.Next() {
-		m := make(map[string]interface{})
+		m := make(container.HashMap)
 		values := make([]interface{}, len(columns))
 		for i := range values {
 			values[i] = new(interface{})
@@ -274,7 +276,7 @@ func MapListScan(r *Rows) ([]map[string]interface{}, error) {
 			return l, err
 		}
 		for i, column := range columns {
-			m[column.Name()] = value(column.ScanType(), values[i])
+			m.Put(column.Name(), value(column.ScanType(), values[i]))
 		}
 		l = append(l, m)
 	}

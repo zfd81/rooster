@@ -2,7 +2,6 @@ package rsql
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -73,8 +72,9 @@ func TestDB_Query(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for k, v := range m {
-		t.Log(k, v, reflect.TypeOf(v).String())
+	for i, k := range m.Keys() {
+		v, _ := m.Get(k)
+		t.Log(i, k, v)
 	}
 
 	t.Log("查询参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
@@ -124,8 +124,9 @@ func TestMapScan(t *testing.T) {
 	rows, _ := db.Query("select * from sys_user where name=:Name", p)
 	if rows.Next() {
 		m, _ := MapScan(rows)
-		for k, v := range m {
-			t.Log(k, v, reflect.TypeOf(v).String())
+		for i, k := range m.Keys() {
+			v, _ := m.Get(k)
+			t.Log(i, k, v)
 		}
 	}
 }
@@ -189,8 +190,9 @@ func TestMapListScan(t *testing.T) {
 	rows, _ := db.Query("select * from sys_user", nil)
 	l, _ := MapListScan(rows)
 	for _, m := range l {
-		for k, v := range m {
-			t.Log(k, ": ", v)
+		for i, k := range m.Keys() {
+			v, _ := m.Get(k)
+			t.Log(i, k, v)
 		}
 	}
 }
@@ -428,8 +430,9 @@ func TestDB_QueryForMap(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for k, v := range m {
-		t.Log(k, v)
+	for i, k := range m.Keys() {
+		v, _ := m.Get(k)
+		t.Log(i, k, v)
 	}
 
 	t.Log("---------------------------------------------------------------")
@@ -439,7 +442,7 @@ func TestDB_QueryForMap(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for k, v := range m {
+	for k, v := range m.Map() {
 		t.Log(k, v)
 	}
 }
