@@ -11,6 +11,7 @@ type Map interface {
 	Get(key interface{}) (value interface{}, found bool)
 	GetString(key interface{}) string
 	GetInt(key interface{}) int
+	GetFloat(key interface{}) float64
 	GetBool(key interface{}) bool
 	Remove(key interface{})
 	Keys() []interface{}
@@ -45,6 +46,14 @@ func (m HashMap) GetInt(key interface{}) int {
 	value, found := m.Get(key)
 	if found {
 		return value.(int)
+	}
+	return 0
+}
+
+func (m HashMap) GetFloat(key interface{}) float64 {
+	value, found := m.Get(key)
+	if found {
+		return value.(float64)
 	}
 	return 0
 }
@@ -125,6 +134,14 @@ func (m JsonMap) GetInt(key interface{}) int {
 	value, found := m.Get(key)
 	if found {
 		return value.(int)
+	}
+	return 0
+}
+
+func (m JsonMap) GetFloat(key interface{}) float64 {
+	value, found := m.Get(key)
+	if found {
+		return value.(float64)
 	}
 	return 0
 }
