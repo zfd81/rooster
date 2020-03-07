@@ -442,8 +442,8 @@ func TestDB_QueryForMap(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for k, v := range m.Map() {
-		t.Log(k, v)
+	for i, k := range m.Keys() {
+		t.Log(i, k)
 	}
 }
 

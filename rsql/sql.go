@@ -240,7 +240,7 @@ func SliceScan(r *Rows) ([]interface{}, error) {
 }
 
 func MapScan(r *Rows) (container.Map, error) {
-	m := make(container.HashMap)
+	m := container.JsonMap{}
 	columns, err := r.ColumnTypes()
 	if err != nil {
 		return m, err
@@ -266,7 +266,7 @@ func MapListScan(r *Rows) ([]container.Map, error) {
 		return l, err
 	}
 	for r.Next() {
-		m := make(container.HashMap)
+		m := container.JsonMap{}
 		values := make([]interface{}, len(columns))
 		for i := range values {
 			values[i] = new(interface{})
