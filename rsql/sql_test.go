@@ -506,3 +506,114 @@ func TestDB_QueryForStructList(t *testing.T) {
 		t.Log(i, u)
 	}
 }
+
+func TestDB_BatchSave(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Log("参数为实现Modeler接口的struct类型>>>>>>>>>>>>>>>>>>>>>>>")
+	u1 := &User{
+		Id:               222,
+		Name:             "user222",
+		Password:         "pwd222",
+		FullName:         "用户222",
+		Number:           "num222",
+		DepartmentId:     10222,
+		Creator:          1,
+		CreatedDate:      time.Now(),
+		Modifier:         1,
+		LastmodifiedDate: time.Now(),
+		Field1:           "test",
+		Field2:           9999,
+	}
+	u2 := &User{
+		Id:               333,
+		Name:             "user333",
+		Password:         "pwd333",
+		FullName:         "用户333",
+		Number:           "num333",
+		DepartmentId:     10333,
+		Creator:          1,
+		CreatedDate:      time.Now(),
+		Modifier:         1,
+		LastmodifiedDate: time.Now(),
+		Field1:           "test",
+		Field2:           0000,
+	}
+	cnt, err := db.BatchSave([](interface{}){u1, u2})
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
+	t.Log("参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
+	ui1 := &UserInfo{
+		Id:               233,
+		Name:             "user233",
+		Password:         "pwd233",
+		FullName:         "用户233",
+		Number:           "num233",
+		DepartmentId:     10233,
+		Creator:          1,
+		CreatedDate:      time.Now(),
+		Modifier:         1,
+		LastmodifiedDate: time.Now(),
+		Field1:           "test",
+		Field2:           9993,
+	}
+	ui2 := &UserInfo{
+		Id:               234,
+		Name:             "user234",
+		Password:         "pwd234",
+		FullName:         "用户234",
+		Number:           "num234",
+		DepartmentId:     10234,
+		Creator:          1,
+		CreatedDate:      time.Now(),
+		Modifier:         1,
+		LastmodifiedDate: time.Now(),
+		Field1:           "test",
+		Field2:           9994,
+	}
+	cnt, err = db.BatchSave([]interface{}{ui1, ui2}, "sys_user")
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
+	t.Log("参数为map类型>>>>>>>>>>>>>>>>>>>>>>>")
+	mp1 := map[string]interface{}{
+		"Id":                255,
+		"Name":              "user255",
+		"Password":          "pwd255",
+		"full_name":         "用户255",
+		"Number":            "num255",
+		"department_id":     10255,
+		"Creator":           1,
+		"created_date":      time.Now(),
+		"Modifier":          1,
+		"lastmodified_date": time.Now(),
+	}
+	mp2 := map[string]interface{}{
+		"Id":                256,
+		"Name":              "user256",
+		"Password":          "pwd256",
+		"full_name":         "用户256",
+		"Number":            "num256",
+		"department_id":     10256,
+		"Creator":           1,
+		"created_date":      time.Now(),
+		"Modifier":          1,
+		"lastmodified_date": time.Now(),
+	}
+	cnt, err = db.BatchSave([]interface{}{mp1, mp2}, "sys_user")
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+}

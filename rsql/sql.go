@@ -170,6 +170,34 @@ func (db *DB) Save(arg interface{}, table ...string) (int64, error) {
 	return num, err
 }
 
+func (db *DB) BatchSave(arg []interface{}, table ...string) (int64, error) {
+	tableName := ""
+	if len(table) > 0 {
+		tableName = table[0]
+	} else {
+		model, ok := arg[0].(Modeler)
+		if ok {
+			tableName = model.TableName()
+		} else {
+			return 0, errors.New("Please enter the table name")
+		}
+	}
+	sql, params, err := batchInsert(tableName, arg...)
+	if err != nil {
+		return -1, err
+	}
+	stmt, err := db.Prepare(sql)
+	if err != nil {
+		return -1, err
+	}
+	res, err := stmt.Exec(params...)
+	if err != nil {
+		return -1, err
+	}
+	num, err := res.RowsAffected() //影响行数
+	return num, err
+}
+
 func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 	sql, params, err := bindParams(query, NewParams(arg))
 	if err != nil {

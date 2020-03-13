@@ -104,3 +104,87 @@ func insert(table string, arg interface{}) (string, []interface{}, error) {
 	sql.WriteString(")")
 	return sql.String(), params, nil
 }
+
+func batchInsert(table string, args ...interface{}) (string, []interface{}, error) {
+	if table == "" || args == nil || len(args) == 0 {
+		return "", nil, errors.ErrParamNotNil
+	}
+
+	var sql bytes.Buffer
+	var sql2 bytes.Buffer
+	params := make([]interface{}, 0, 20)
+	columns := make([]string, 0, 20)
+	var p Params
+
+	for index, arg := range args {
+		typeOfArg := reflect.TypeOf(arg)
+		if typeOfArg.Kind() == reflect.Ptr {
+			typeOfArg = typeOfArg.Elem()
+		}
+
+		if index == 0 {
+			sql.WriteString("insert into ")
+			sql.WriteString(table)
+			sql.WriteString(" (")
+			sql2.WriteString(") values ")
+		} else {
+			sql2.WriteString(",")
+		}
+
+		if typeOfArg.Kind() == reflect.Struct {
+			p = NewStructParams(arg)
+			if p.Size() < 1 {
+				return "", nil, errors.ErrParamEmpty
+			}
+			if index == 0 {
+				flag := 0 //标识
+				for i := 0; i < typeOfArg.NumField(); i++ {
+					field := typeOfArg.Field(i)
+					f := NewField(&field)
+					if f.NotIgnore() {
+						if flag == 0 {
+							flag++
+						} else {
+							sql.WriteString(",")
+						}
+						name := f.AttrName()
+						if name == "" {
+							name = f.Name
+						}
+						sql.WriteString(name)
+						columns = append(columns, f.Name)
+					}
+				}
+			}
+
+		}
+
+		if typeOfArg.Kind() == reflect.Map {
+			p = NewMapParams(arg.(map[string]interface{}))
+			if p.Size() < 1 {
+				return "", nil, errors.ErrParamEmpty
+			}
+			if index == 0 {
+				columns = p.Names()
+				for i, v := range columns {
+					if i > 0 {
+						sql.WriteString(",")
+					}
+					sql.WriteString(v)
+				}
+			}
+		}
+
+		sql2.WriteString("(")
+		for i, v := range columns {
+			if i > 0 {
+				sql2.WriteString(",")
+			}
+			sql2.WriteString("?")
+			params = append(params, p.Get(v))
+		}
+		sql2.WriteString(")")
+	}
+	sql.WriteString(sql2.String())
+	return sql.String(), params, nil
+}
