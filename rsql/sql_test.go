@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zfd81/rooster/types/container"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -261,6 +263,27 @@ func TestDB_Save(t *testing.T) {
 		"lastmodified_date": time.Now(),
 	}
 	cnt, err = db.Save(mp, "sys_user")
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
+
+	t.Log("参数为JsonMap类型>>>>>>>>>>>>>>>>>>>>>>>")
+	jm := container.JsonMap{}
+	jm.Put("Id", 26)
+	jm.Put("Name", "user26")
+	jm.Put("Password", "pwd26")
+
+	jm.Put("full_name", "用户26")
+	jm.Put("Number", "num26")
+	jm.Put("department_id", 1026)
+	jm.Put("Creator", "1")
+	jm.Put("created_date", time.Now())
+	jm.Put("Modifier", "1")
+	jm.Put("lastmodified_date", time.Now())
+
+	cnt, err = db.Save(jm, "sys_user")
 	if err != nil {
 		t.Log(err)
 	} else {

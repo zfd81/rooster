@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/zfd81/rooster/types/container"
+
 	"github.com/zfd81/rooster/errors"
 	"github.com/zfd81/rooster/util"
 )
@@ -83,7 +85,13 @@ func insert(table string, arg interface{}) (string, []interface{}, error) {
 	}
 
 	if typeOfArg.Kind() == reflect.Map {
-		p := NewMapParams(arg.(map[string]interface{}))
+		var p Params
+		v, ok := arg.(container.JsonMap)
+		if ok {
+			p = NewMapParams(v.Map())
+		} else {
+			p = NewMapParams(arg.(map[string]interface{}))
+		}
 		if p.Size() < 1 {
 			return "", nil, errors.ErrParamEmpty
 		}
