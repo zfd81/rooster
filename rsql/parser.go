@@ -168,7 +168,12 @@ func batchInsert(table string, args ...interface{}) (string, []interface{}, erro
 		}
 
 		if typeOfArg.Kind() == reflect.Map {
-			p = NewMapParams(arg.(map[string]interface{}))
+			v, ok := arg.(container.JsonMap)
+			if ok {
+				p = NewMapParams(v.Map())
+			} else {
+				p = NewMapParams(arg.(map[string]interface{}))
+			}
 			if p.Size() < 1 {
 				return "", nil, errors.ErrParamEmpty
 			}
