@@ -3,6 +3,8 @@ package rsql
 import (
 	"reflect"
 
+	"github.com/zfd81/rooster/types/container"
+
 	"github.com/zfd81/rooster/util"
 )
 
@@ -79,6 +81,12 @@ func NewParams(arg interface{}) Params {
 			if ok {
 				return p
 			}
+
+			jm, ok := value.Interface().(container.JsonMap)
+			if ok {
+				return NewMapParams(jm.Map())
+			}
+
 			m, ok := value.Interface().(map[string]interface{})
 			if ok {
 				return NewMapParams(m)
