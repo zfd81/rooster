@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zfd81/rooster/rlog"
+
 	"github.com/zfd81/rooster/types/container"
 
 	"github.com/spf13/cast"
@@ -57,6 +59,7 @@ type DB struct {
 	driverName     string
 	dataSourceName string
 	unsafe         bool
+	logger         *rlog.Logger
 }
 
 // Open is the same as rsql.Open, but returns an *rooster.rsql.DB instead.
@@ -65,7 +68,7 @@ func Open(driverName, dataSourceName string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DB{DB: db, driverName: driverName, dataSourceName: dataSourceName}, err
+	return &DB{DB: db, driverName: driverName, dataSourceName: dataSourceName, logger: rlog.NewLogger()}, err
 }
 
 // Connect to a database and verify with a ping.
@@ -82,11 +85,16 @@ func Connect(driverName, dataSourceName string) (*DB, error) {
 	return db, nil
 }
 
+func (db *DB) SetLogLevel(level rlog.LogLevel) {
+	db.logger.SetLevel(level)
+}
+
 func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
 	sql, params, err := bindParams(query, NewParams(arg))
 	if err != nil {
 		return nil, err
 	}
+	db.logger.Debug(log(sql, params)...)
 	r, err := db.DB.Query(sql, params...)
 	if err != nil {
 		return nil, err
@@ -162,6 +170,7 @@ func (db *DB) Save(arg interface{}, table ...string) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	db.logger.Debug(log(sql, params)...)
 	res, err := stmt.Exec(params...)
 	if err != nil {
 		return -1, err
@@ -190,6 +199,7 @@ func (db *DB) BatchSave(arg []interface{}, table ...string) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	db.logger.Debug(log(sql, params)...)
 	res, err := stmt.Exec(params...)
 	if err != nil {
 		return -1, err
@@ -207,6 +217,7 @@ func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	db.logger.Debug(log(sql, params)...)
 	res, err := stmt.Exec(params...)
 	if err != nil {
 		return -1, err
@@ -471,4 +482,9 @@ func pagesql(driverName string, sql string, pageNumber int, pageSize int) (strin
 		return sql, err
 	}
 	return newSql, nil
+}
+
+func log(sql string, params []interface{}) (messages []interface{}) {
+	messages = append([]interface{}{"\r\n", sql, "\r\n", "\tparams:"}, params)
+	return
 }
