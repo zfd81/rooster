@@ -45,6 +45,10 @@ func (m HashMap) GetString(key interface{}) string {
 func (m HashMap) GetInt(key interface{}) int {
 	value, found := m.Get(key)
 	if found {
+		v, ok := value.(int64)
+		if ok {
+			return int(v)
+		}
 		return value.(int)
 	}
 	return 0
@@ -133,6 +137,10 @@ func (m JsonMap) GetString(key interface{}) string {
 func (m JsonMap) GetInt(key interface{}) int {
 	value, found := m.Get(key)
 	if found {
+		v, ok := value.(int64)
+		if ok {
+			return int(v)
+		}
 		return value.(int)
 	}
 	return 0
