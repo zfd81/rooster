@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/zfd81/rooster/types/container"
 )
 
 type ReplacerFunc func(index int, start int, end int, content string) (string, error)
@@ -93,28 +95,51 @@ func ReplaceBetween(str string, open string, close string, replacer ReplacerFunc
 }
 
 func ReplaceByKeyword(str string, keyword byte, replacer ReplacerFunc) (string, error) {
+	stack := container.NewArrayStack()
 	if str == "" {
 		return "", nil
 	}
-	strLen := len(str)
-	index := 0
-	start := 0
-	end := 0
+	strLen := len(str) //字符串长度
+	index := 0         //关键字出现的顺序
+	start := 0         //替换内容的开始位置
+	end := 0           //替换内容的结束位置
 	buffer := make([]byte, 0, strLen)
 	for i := 0; i < strLen; i++ {
-		if str[i] == keyword {
+		char := str[i]
+		if char == '\\' { //转义符判断
+			if start > 0 {
+				return "", fmt.Errorf("Syntax error,near %d '%s'", start, str[start-1:])
+			}
+			if !stack.Empty() { //判断转义符前是否有转义符
+				stack.Pop()
+				buffer = append(buffer, '\\')
+			}
+			if i+1 == strLen { //判断最后一位
+				buffer = append(buffer, char)
+			} else {
+				stack.Push(char)
+			}
+		} else if char == keyword { //关键字判断
 			//判断是否最后一位
 			if i+1 == strLen {
 				return "", fmt.Errorf("Syntax error,near %d '%s'", i, str[i:])
 			}
-			index++
-			start = i + 1
-			end = start
+			if stack.Empty() {
+				index++
+				start = i + 1
+				end = start
+			} else { //关键字被转义
+				stack.Pop()
+				buffer = append(buffer, keyword)
+			}
 		} else {
-			if start == 0 {
-				buffer = append(buffer, str[i])
-			} else {
-				char := str[i]
+			if !stack.Empty() {
+				stack.Pop()
+				buffer = append(buffer, '\\')
+			}
+			if start == 0 { //处理非替换内容
+				buffer = append(buffer, char)
+			} else { //处理替换内容
 				if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 95 {
 					//判断最后一位
 					if i+1 == strLen {
@@ -137,7 +162,7 @@ func ReplaceByKeyword(str string, keyword byte, replacer ReplacerFunc) (string, 
 						buffer = append(buffer, []byte(newContent)...)
 						start = 0
 						end = 0
-						buffer = append(buffer, str[i])
+						buffer = append(buffer, char)
 					} else {
 						return "", fmt.Errorf("Syntax error,near %d '%s'", start, str[start-1:])
 					}

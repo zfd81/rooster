@@ -5,16 +5,15 @@ import (
 )
 
 func Test_bindParams(t *testing.T) {
-	str := "select name from tbale where name=:Name and Password =:PWD and{} {age>1}"
+	str := "select name from tbale where name=:Name and Password =\\:PWD and{} {age>1}=:aa"
 	user := &User{Name: "zfd", Password: "456"}
 	param := NewStructParams(user)
 	str, params, err := bindParams(str, param)
+	if err != nil {
+		t.Error(err)
+	}
 	t.Log(str)
 	t.Log(params)
-	t.Log(err)
-	t.Log(param.Size())
-	t.Log(param.Names())
-	t.Log(len(param.Names()))
 }
 
 func Test_insert(t *testing.T) {
