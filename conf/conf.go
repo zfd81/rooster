@@ -9,10 +9,10 @@ const (
 )
 
 type Config struct {
-	Name     string              `toml:"name"`
-	Version  string              `toml:"version"`
-	Http     Http                `toml:"http"`
-	Pagesqls map[string]*PageSql `toml:"pagesqls"`
+	Name     string              `mapstructure:"name"`
+	Version  string              `mapstructure:"version"`
+	Http     Http                `mapstructure:"http"`
+	Pagesqls map[string]*PageSql `mapstructure:"pagesqls"`
 }
 
 func (c *Config) PageSql(driverName string, sql string) string {
@@ -20,11 +20,11 @@ func (c *Config) PageSql(driverName string, sql string) string {
 }
 
 type Http struct {
-	Port int `toml:"port"`
+	Port int `mapstructure:"port"`
 }
 
 type PageSql struct {
-	Template string `toml:"template"`
+	Template string `mapstructure:"template"`
 }
 
 func (p *PageSql) Sql(sql string) string {
