@@ -160,11 +160,11 @@ func (db *DB) QueryCount(query string, arg interface{}) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	s, err := rows.SliceScan()
-	if err != nil {
-		return 0, err
+	var cnt int
+	if rows.Next() {
+		err = rows.Scan(&cnt)
 	}
-	return cast.ToInt(s[0]), nil
+	return cnt, err
 }
 
 func (db *DB) Save(arg interface{}, table ...string) (int64, error) {
