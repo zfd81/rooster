@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zfd81/rooster/types/container"
-
 	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/zfd81/rooster/types/container"
 )
 
 type User struct {
@@ -639,4 +639,23 @@ func TestDB_BatchSave(t *testing.T) {
 	} else {
 		t.Log(cnt)
 	}
+}
+
+func TestDB_QueryCount(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+
+	cnt, err := db.QueryCount("select * from sys_user where name like :val", "%2")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(cnt)
+
+	cnt, err = db.QueryCount("select * from sys_user", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(cnt)
 }

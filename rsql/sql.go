@@ -1,6 +1,7 @@
 package rsql
 
 import (
+	"bytes"
 	"database/sql"
 	"errors"
 	"reflect"
@@ -148,6 +149,22 @@ func (db *DB) QueryStructList(list interface{}, query string, arg interface{}, p
 		return err
 	}
 	return rows.StructListScan(list)
+}
+
+func (db *DB) QueryCount(query string, arg interface{}) (int, error) {
+	var sql bytes.Buffer
+	sql.WriteString("select count(1) recordCount from (")
+	sql.WriteString(query)
+	sql.WriteString(") roosterCountTable")
+	rows, err := db.Query(sql.String(), arg)
+	if err != nil {
+		return 0, err
+	}
+	s, err := rows.SliceScan()
+	if err != nil {
+		return 0, err
+	}
+	return cast.ToInt(s[0]), nil
 }
 
 func (db *DB) Save(arg interface{}, table ...string) (int64, error) {
