@@ -11,20 +11,83 @@ import (
 	"github.com/zfd81/rooster/util"
 )
 
-func bindParams(sql string, arg Params) (string, []interface{}, error) {
-	newSql, err := util.ReplaceBetween(sql, "{", "}", func(index int, start int, end int, content string) (string, error) {
-		ignore := false
-		fragment, err := util.ReplaceByKeyword(content, ':', func(i int, s int, e int, c string) (string, error) {
-			if arg.Get(c) == nil {
-				ignore = true
-				return "", nil
+func validCharacter(char byte) bool {
+	if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 95 {
+		return true
+	}
+	return false
+}
+
+func foreach(script string, arg *Params) (string, error) {
+	end := 0 //切片名的结束位置
+	for i, char := range script {
+		if i > 0 {
+			if !validCharacter(byte(char)) {
+				end = i
+				break
 			}
-			return fmt.Sprintf(":%s", c), nil
+		}
+	}
+	name := script[1:end] //要遍历的切片名称
+	val := arg.Get(name)
+	if val == nil {
+		return "", fmt.Errorf("Syntax error, key %s not found", name)
+	}
+	v := reflect.ValueOf(val)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Slice {
+		return "", fmt.Errorf("Syntax error, key %s is not a slice type", name)
+	}
+	length := v.Len()
+	var sql bytes.Buffer
+	for index := 0; index < length; index++ {
+		item := v.Index(index)
+		fragment, err := util.ReplaceByKeyword(script[end:], ':', func(i int, s int, e int, c string) (string, error) {
+			if c == "val" {
+				arg.Add(fmt.Sprintf("%s%d", c, index), item.Interface())
+			} else {
+				arg.Add(fmt.Sprintf("%s%d", c, index), item.MapIndex(reflect.ValueOf(c)).Interface())
+			}
+			return fmt.Sprintf(":%s%d", c, index), nil
 		})
-		if ignore {
+		if err != nil {
 			return "", err
 		}
-		return fragment, err
+		if index > 0 {
+			sql.WriteString(",")
+		}
+		sql.WriteString(fragment)
+	}
+	return sql.String(), nil
+}
+
+func empty(script string, arg *Params) (string, error) {
+	ignore := false
+	fragment, err := util.ReplaceByKeyword(script, ':', func(i int, s int, e int, c string) (string, error) {
+		if arg.Get(c) == nil {
+			ignore = true
+			return "", nil
+		}
+		return fmt.Sprintf(":%s", c), nil
+	})
+	if ignore {
+		return "", err
+	}
+	return fragment, err
+}
+
+func bindParams(sql string, arg Params) (string, []interface{}, error) {
+	newSql, err := util.ReplaceBetween(sql, "{", "}", func(index int, start int, end int, content string) (string, error) {
+		if content != "" {
+			if content[0] == '@' {
+				return foreach(content, &arg)
+			} else {
+				return empty(content, &arg)
+			}
+		}
+		return "", nil
 	})
 	if err != nil {
 		return "", nil, err

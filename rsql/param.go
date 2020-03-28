@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	SingleParameterName string = "val"
+	SINGLE_PARAMETER_NAME       string = "val"
+	SINGLE_SLICE_PARAMETER_NAME string = "vals"
 )
 
 type Params map[string]interface{}
@@ -98,6 +99,9 @@ func NewParams(arg interface{}) Params {
 		if value.Kind() == reflect.String || value.Kind() == reflect.Int || value.Kind() == reflect.Int64 {
 			return NewSingleParams(value.Interface())
 		}
+		if value.Kind() == reflect.Slice {
+			return NewSingleSliceParams(value.Interface())
+		}
 	}
 	return make(Params)
 }
@@ -119,6 +123,12 @@ func NewStructParams(params interface{}) Params {
 
 func NewSingleParams(param interface{}) Params {
 	p := make(Params)
-	p.Add(SingleParameterName, param)
+	p.Add(SINGLE_PARAMETER_NAME, param)
+	return p
+}
+
+func NewSingleSliceParams(param interface{}) Params {
+	p := make(Params)
+	p.Add(SINGLE_SLICE_PARAMETER_NAME, param)
 	return p
 }
