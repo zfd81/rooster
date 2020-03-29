@@ -18,7 +18,7 @@ func Test_bindParams(t *testing.T) {
 	ms1 := []map[string]interface{}{{"aa": 111, "bb": 222, "cc": 333}, {"aa": 444, "bb": 555, "cc": 666}}
 	param.Add("msa", ms1)
 	param.Add("msa1", 12)
-	str = "insert into tbale (name,pwd,age) values {@msa (:Name,:this.bb,:this.cc)}"
+	str = "insert into tbale (name,pwd,age) values {@msa[,] (:Name,:this.bb,:this.cc)}"
 	sql, params, err := bindParams(str, param)
 	if err != nil {
 		t.Error(err)
@@ -28,7 +28,7 @@ func Test_bindParams(t *testing.T) {
 
 	ms2 := []string{"11", "22", "33"}
 	param.Add("msb", ms2)
-	str = "select * from tbale where name in ({@msb :this.val})"
+	str = "select * from tbale where name in ({@msb[,] :this.val})"
 	sql, params, err = bindParams(str, param)
 	if err != nil {
 		t.Error(err)
@@ -37,7 +37,7 @@ func Test_bindParams(t *testing.T) {
 	t.Log(params)
 
 	p := NewParams(ms2)
-	str = "select * from tbale where name in ({@vals :this.val})"
+	str = "select * from tbale where name in ({@vals[,] :this.val})"
 	sql, params, err = bindParams(str, p)
 	if err != nil {
 		t.Error(err)
@@ -97,7 +97,7 @@ func Test_foreach(t *testing.T) {
 	ms1 := []map[string]interface{}{{"aa": 111, "bb": 222, "cc": 333}, {"aa": 111, "bb": 222, "cc": 333}}
 	p.Add("msa", ms1)
 	p.Add("msa1", 12)
-	str := "@msa (:this.aa,:this.bb,:this.cc1)"
+	str := "@msa[,] (:this.aa,:this.bb,:this.cc1)"
 	sql, err := foreach(str, &p)
 	if err != nil {
 		t.Error(err)
@@ -107,11 +107,20 @@ func Test_foreach(t *testing.T) {
 
 	ms2 := []string{"11", "22", "33"}
 	p.Add("msb", ms2)
-	str = "@msb :this.val"
+	str = "@msb[,] :this.val"
 	sql, err = foreach(str, &p)
 	if err != nil {
 		t.Error(err)
 	}
 	t.Log(sql)
 	t.Log(p)
+}
+
+func Test_validCharacter(t *testing.T) {
+	var b byte = ' '
+	t.Log(b)
+	str := "he llo[]"
+	for _, v := range str {
+		t.Log(v)
+	}
 }

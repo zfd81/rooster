@@ -20,19 +20,48 @@ func validCharacter(char byte) bool {
 }
 
 func foreach(script string, arg *Params) (string, error) {
-	end := 0 //切片名的结束位置
+	start := 0      //切片名称开始位置
+	end := 0        //切片名称结束位置
+	open := 0       //[方括号开始位置
+	close := 0      //]方括号结束位置
+	var name string //要遍历的切片名称
+	separator := "" //分隔符
 	for i, char := range script {
-		if i > 0 {
-			if !validCharacter(byte(char)) {
+		if char != 32 {
+			if start == 0 && validCharacter(byte(char)) {
+				start = i
+				continue
+			}
+			if !validCharacter(byte(char)) && open == 0 && start > 0 {
 				end = i
+			}
+			if char == 91 {
+				if start == 0 || open > 0 {
+					return "", fmt.Errorf("Syntax error,near '%s'", script[:i+1])
+				}
+				open = i
+				continue
+			}
+			if char == 93 {
+				if open == 0 {
+					return "", fmt.Errorf("Syntax error,near '%s'", script[:i+1])
+				}
+				close = i
 				break
 			}
 		}
 	}
-	name := script[1:end] //要遍历的切片名称
+	if close == 0 {
+		return "", fmt.Errorf("Syntax error,near '%s'", script)
+	}
+	name = strings.TrimSpace(script[start:end])
+	if close-open > 1 {
+		separator = script[open+1 : close]
+	}
+	content := script[close+1:]
 	val := arg.Get(name)
 	if val == nil {
-		return "", fmt.Errorf("Syntax error, key %s not found", name)
+		return "", fmt.Errorf("Syntax error, key '%s' not found, near '%s'", name, script[:end])
 	}
 	v := reflect.ValueOf(val)
 	if v.Kind() == reflect.Ptr {
@@ -45,7 +74,7 @@ func foreach(script string, arg *Params) (string, error) {
 	var sql bytes.Buffer
 	for index := 0; index < length; index++ {
 		item := v.Index(index)
-		fragment, err := util.ReplaceByKeyword(script[end:], ':', func(i int, s int, e int, c string) (string, error) {
+		fragment, err := util.ReplaceByKeyword(content, ':', func(i int, s int, e int, c string) (string, error) {
 			if strings.HasPrefix(c, "this.") {
 				key := c[5:]
 				if key == "val" {
@@ -66,7 +95,9 @@ func foreach(script string, arg *Params) (string, error) {
 			return "", err
 		}
 		if index > 0 {
-			sql.WriteString(",")
+			sql.WriteString(" ")
+			sql.WriteString(separator)
+			sql.WriteString(" ")
 		}
 		sql.WriteString(fragment)
 	}
