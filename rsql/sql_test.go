@@ -347,6 +347,51 @@ func TestDB_Exec_Ins(t *testing.T) {
 	} else {
 		t.Log(cnt)
 	}
+
+	mps := []map[string]interface{}{
+		{
+			"Id":                25,
+			"Name":              "user25",
+			"Password":          "pwd25",
+			"full_name":         "用户25",
+			"Number":            "num25",
+			"department_id":     1025,
+			"Creator":           1,
+			"created_date":      time.Now(),
+			"Modifier":          1,
+			"lastmodified_date": time.Now(),
+		},
+		{
+			"Id":                26,
+			"Name":              "user26",
+			"Password":          "pwd26",
+			"full_name":         "用户26",
+			"Number":            "num26",
+			"department_id":     1026,
+			"Creator":           1,
+			"created_date":      time.Now(),
+			"Modifier":          1,
+			"lastmodified_date": time.Now(),
+		},
+		{
+			"Id":                27,
+			"Name":              "user27",
+			"Password":          "pwd27",
+			"full_name":         "用户27",
+			"Number":            "num27",
+			"department_id":     1027,
+			"Creator":           1,
+			"created_date":      time.Now(),
+			"Modifier":          1,
+			"lastmodified_date": time.Now(),
+		}}
+	sql = "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values {@vals (:this.Id,:this.created_date,:this.lastmodified_date,:this.Name,:this.Number,:this.Password,:this.department_id)}"
+	cnt, err = db.Exec(sql, mps)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Log(cnt)
+	}
 }
 
 func TestDB_Exec_Del(t *testing.T) {
@@ -478,6 +523,30 @@ func TestDB_QueryForMapList(t *testing.T) {
 
 	//空参数查询
 	l, err := db.QueryMapList("select * from sys_user", nil, 1, 4)
+	if err != nil {
+		t.Error(err)
+	}
+	for _, m := range l {
+		t.Log(m)
+	}
+
+	//SQL中使用遍历实现in的用法
+	ps := []int{25, 26, 27}
+	sql := "select * from sys_user where id in({@vals :this.val})"
+	l, err = db.QueryMapList(sql, ps, 1, 10)
+	if err != nil {
+		t.Error(err)
+	}
+	for _, m := range l {
+		t.Log(m)
+	}
+
+	//SQL中使用遍历实现in的用法
+	mp := map[string]interface{}{
+		"ids": []int{25, 26, 27},
+	}
+	sql = "select * from sys_user where id in({@ids :this.val})"
+	l, err = db.QueryMapList(sql, mp, 1, 10)
 	if err != nil {
 		t.Error(err)
 	}
