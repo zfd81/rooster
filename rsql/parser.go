@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/zfd81/rooster/types/container"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func validCharacter(char byte) bool {
-	if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 95 {
+	if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 46 || char == 95 {
 		return true
 	}
 	return false
@@ -45,12 +46,21 @@ func foreach(script string, arg *Params) (string, error) {
 	for index := 0; index < length; index++ {
 		item := v.Index(index)
 		fragment, err := util.ReplaceByKeyword(script[end:], ':', func(i int, s int, e int, c string) (string, error) {
-			if c == "val" {
-				arg.Add(fmt.Sprintf("%s%d", c, index), item.Interface())
-			} else {
-				arg.Add(fmt.Sprintf("%s%d", c, index), item.MapIndex(reflect.ValueOf(c)).Interface())
+			if strings.HasPrefix(c, "this.") {
+				key := c[5:]
+				if key == "val" {
+					arg.Add(fmt.Sprintf("%s.%s%d", name, c, index), item.Interface())
+				} else {
+					value := item.MapIndex(reflect.ValueOf(c[5:]))
+					if value.IsValid() {
+						arg.Add(fmt.Sprintf("%s.%s%d", name, c, index), value.Interface())
+					} else {
+						arg.Add(fmt.Sprintf("%s.%s%d", name, c, index), new(interface{}))
+					}
+				}
+				return fmt.Sprintf(":%s.%s%d", name, c, index), nil
 			}
-			return fmt.Sprintf(":%s%d", c, index), nil
+			return fmt.Sprintf(":%s", c), nil
 		})
 		if err != nil {
 			return "", err

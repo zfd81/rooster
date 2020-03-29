@@ -140,7 +140,7 @@ func ReplaceByKeyword(str string, keyword byte, replacer ReplacerFunc) (string, 
 			if start == 0 { //处理非替换内容
 				buffer = append(buffer, char)
 			} else { //处理替换内容
-				if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 95 {
+				if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 46 || char == 95 {
 					//判断最后一位
 					if i+1 == strLen {
 						content := str[start:]
