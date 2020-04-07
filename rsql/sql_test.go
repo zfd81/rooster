@@ -728,3 +728,48 @@ func TestDB_QueryCount(t *testing.T) {
 	}
 	t.Log(cnt)
 }
+
+func TestDB_BeginTx(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	u := &User{
+		Id:               29,
+		Name:             "user23",
+		Password:         "pwd23",
+		Number:           "num23",
+		DepartmentId:     1023,
+		CreatedDate:      time.Now(),
+		LastmodifiedDate: time.Now(),
+	}
+	u1 := &User{
+		Id:               239,
+		Name:             "user23",
+		Password:         "pwd23",
+		Number:           "num23",
+		DepartmentId:     1023,
+		CreatedDate:      time.Now(),
+		LastmodifiedDate: time.Now(),
+	}
+	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:CreatedDate,:LastmodifiedDate,:Name,:Number,:Password,:DepartmentId)"
+	tx, err := db.BeginTx()
+
+	cnt, err := tx.ExecTx(sql, u)
+	if err != nil {
+		t.Log(err)
+		tx.Rollback()
+	} else {
+		t.Log(cnt)
+	}
+	cnt, err = tx.ExecTx(sql, u1)
+	if err != nil {
+		t.Log(err)
+		tx.Rollback()
+	} else {
+		t.Log(cnt)
+
+	}
+	tx.Commit()
+	//tx.Rollback()
+}

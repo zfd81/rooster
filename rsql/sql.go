@@ -55,6 +55,30 @@ func (r *Rows) StructListScan(list interface{}) error {
 	return StructListScan(r, list)
 }
 
+type Tx struct {
+	*sql.Tx
+	driverName string
+	logger     *rlog.Logger
+}
+
+func (t *Tx) DriverName() string {
+	return t.driverName
+}
+
+func (t *Tx) ExecTx(query string, arg interface{}) (int64, error) {
+	sql, params, err := bindParams(query, NewParams(arg))
+	if err != nil {
+		return -1, err
+	}
+	t.logger.Debug(log(sql, params)...)
+	res, err := t.Exec(sql, params...)
+	if err != nil {
+		return -1, err
+	}
+	num, err := res.RowsAffected() //影响行数
+	return num, err
+}
+
 type DB struct {
 	*sql.DB
 	driverName     string
@@ -243,6 +267,14 @@ func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 	return num, err
 }
 
+func (db *DB) BeginTx() (*Tx, error) {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	return &Tx{Tx: tx, driverName: db.driverName, logger: db.logger}, err
+}
+
 //func (db *DB) XExec(query string, param Paramer) (int64, error) {
 //	rsql, args, err := bindParams(query, param)
 //	if err != nil {
@@ -260,21 +292,6 @@ func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 //	num, err := res.RowsAffected()
 //	return num, err
 //}
-
-// func (db *DB) Execute(query string, arg interface{}) (rsql.Result, error) {
-// 	var rsql string
-// 	var arglist []interface{}
-// 	var err error
-// 	if maparg, ok := arg.(map[string]interface{}); ok {
-// 		rsql, arglist, err = bindMap(query, maparg)
-// 	} else {
-// 		// rsql, arglist, err = bindStruct(query, maparg)
-// 	}
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return db.Exec(rsql, arglist...)
-// }
 
 func SliceScan(r *Rows) ([]interface{}, error) {
 	columns, err := r.ColumnTypes()
