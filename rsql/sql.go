@@ -445,28 +445,13 @@ func StructListScan(r *Rows, list interface{}) error {
 func wrapFields(v reflect.Value, names []string) []interface{} {
 	v = reflect.Indirect(v)
 	values := make([]interface{}, len(names))
-	t := v.Type()
-	fieldNum := v.NumField()
+	mapping := GetNameMapping(v.Type())
 	for index, name := range names {
-		flag := true
-		name = strings.ToLower(name)
-		for i := 0; i < fieldNum; i++ {
-			field := t.Field(i)
-			f := NewField(&field)
-			if f.NotIgnore() {
-				aname := f.AttrName()
-				if aname == "" {
-					aname = f.Name
-				}
-				if strings.ToLower(aname) == name {
-					valueOfField := v.FieldByName(f.Name)
-					values[index] = valueOfField.Addr().Interface()
-					flag = false
-					break
-				}
-			}
-		}
-		if flag {
+		indexes, ok := mapping[strings.ToLower(name)]
+		if ok {
+			f := FieldByIndexes(v, indexes)
+			values[index] = f.Addr().Interface()
+		} else {
 			values[index] = new(interface{})
 		}
 	}
