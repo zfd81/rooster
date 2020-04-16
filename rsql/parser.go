@@ -147,70 +147,45 @@ func insert(table string, arg interface{}) (string, []interface{}, error) {
 		return "", nil, errors.ErrParamNotNil
 	}
 
+	var sql bytes.Buffer
+	var sql2 bytes.Buffer
+	var p Params
+
 	typeOfArg := reflect.TypeOf(arg)
 	if typeOfArg.Kind() == reflect.Ptr {
 		typeOfArg = typeOfArg.Elem()
 	}
-
-	var sql bytes.Buffer
-	var sql2 bytes.Buffer
-	params := make([]interface{}, 0, 20)
-	flag := 0 //标识
-
-	sql.WriteString("insert into ")
-	sql.WriteString(table)
-	sql.WriteString(" (")
-	sql2.WriteString(") values (")
-
 	if typeOfArg.Kind() == reflect.Struct {
-		p := NewStructParams(arg)
-		if p.Size() < 1 {
-			return "", nil, errors.ErrParamEmpty
-		}
-		for i := 0; i < typeOfArg.NumField(); i++ {
-			field := typeOfArg.Field(i)
-			f := NewField(&field)
-			if f.NotIgnore() {
-				if flag == 0 {
-					flag++
-				} else {
-					sql.WriteString(",")
-					sql2.WriteString(",")
-				}
-				name := f.AttrName()
-				if name == "" {
-					name = f.Name
-				}
-				sql.WriteString(name)
-				sql2.WriteString("?")
-				params = append(params, p.Get(f.Name))
-			}
-		}
-	}
-
-	if typeOfArg.Kind() == reflect.Map {
-		var p Params
+		p = NewStructParams(arg)
+	} else if typeOfArg.Kind() == reflect.Map {
 		v, ok := arg.(container.JsonMap)
 		if ok {
 			p = NewMapParams(v.Map())
 		} else {
 			p = NewMapParams(arg.(map[string]interface{}))
 		}
-		if p.Size() < 1 {
-			return "", nil, errors.ErrParamEmpty
-		}
-		p.Iterator(func(key string, value interface{}) {
-			if flag == 0 {
-				flag++
-			} else {
-				sql.WriteString(",")
-				sql2.WriteString(",")
-			}
-			sql.WriteString(string(key))
-			sql2.WriteString("?")
-			params = append(params, value)
-		})
 	}
+	if p.Size() < 1 {
+		return "", nil, errors.ErrParamEmpty
+	}
+	params := make([]interface{}, 0, p.Size())
+	sql.WriteString("insert into ")
+	sql.WriteString(table)
+	sql.WriteString(" (")
+	sql2.WriteString(") values (")
+
+	flag := 0 //标识
+	p.Iterator(func(key string, value interface{}) {
+		if flag == 0 {
+			flag++
+		} else {
+			sql.WriteString(",")
+			sql2.WriteString(",")
+		}
+		sql.WriteString(string(key))
+		sql2.WriteString("?")
+		params = append(params, value)
+	})
 
 	sql.WriteString(sql2.String())
 	sql.WriteString(")")
@@ -224,72 +199,42 @@ func batchInsert(table string, args ...interface{}) (string, []interface{}, erro
 
 	var sql bytes.Buffer
 	var sql2 bytes.Buffer
-	params := make([]interface{}, 0, 20)
-	columns := make([]string, 0, 20)
 	var p Params
+	var columns []string
+	params := make([]interface{}, 0, 50)
 
 	for index, arg := range args {
 		typeOfArg := reflect.TypeOf(arg)
 		if typeOfArg.Kind() == reflect.Ptr {
 			typeOfArg = typeOfArg.Elem()
 		}
-
-		if index == 0 {
-			sql.WriteString("insert into ")
-			sql.WriteString(table)
-			sql.WriteString(" (")
-			sql2.WriteString(") values ")
-		} else {
-			sql2.WriteString(",")
-		}
-
 		if typeOfArg.Kind() == reflect.Struct {
 			p = NewStructParams(arg)
-			if p.Size() < 1 {
-				return "", nil, errors.ErrParamEmpty
-			}
-			if index == 0 {
-				flag := 0 //标识
-				for i := 0; i < typeOfArg.NumField(); i++ {
-					field := typeOfArg.Field(i)
-					f := NewField(&field)
-					if f.NotIgnore() {
-						if flag == 0 {
-							flag++
-						} else {
-							sql.WriteString(",")
-						}
-						name := f.AttrName()
-						if name == "" {
-							name = f.Name
-						}
-						sql.WriteString(name)
-						columns = append(columns, f.Name)
-					}
-				}
-			}
-
-		}
-
-		if typeOfArg.Kind() == reflect.Map {
+		} else if typeOfArg.Kind() == reflect.Map {
 			v, ok := arg.(container.JsonMap)
 			if ok {
 				p = NewMapParams(v.Map())
 			} else {
 				p = NewMapParams(arg.(map[string]interface{}))
 			}
-			if p.Size() < 1 {
-				return "", nil, errors.ErrParamEmpty
-			}
-			if index == 0 {
-				columns = p.Names()
-				for i, v := range columns {
-					if i > 0 {
-						sql.WriteString(",")
-					}
-					sql.WriteString(v)
+		}
+		if p.Size() < 1 {
+			return "", nil, errors.ErrParamEmpty
+		}
+		if index == 0 {
+			columns = p.Names()
+			sql.WriteString("insert into ")
+			sql.WriteString(table)
+			sql.WriteString(" (")
+			sql2.WriteString(") values ")
+			for i, v := range columns {
+				if i > 0 {
+					sql.WriteString(",")
 				}
+				sql.WriteString(v)
 			}
+		} else {
+			sql2.WriteString(",")
 		}
 
 		sql2.WriteString("(")

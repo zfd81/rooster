@@ -21,6 +21,8 @@ type Modeler interface {
 
 type Field struct {
 	*reflect.StructField
+	Index      []int
+	Path       string
 	ignore     bool
 	attributes map[string]string
 }
@@ -66,19 +68,75 @@ func NewField(field *reflect.StructField) *Field {
 	return f
 }
 
-func GetNameMapping(t reflect.Type) map[string]int {
-	nameMapping := map[string]int{}
+func FieldByIndexes(v reflect.Value, indexes []int) reflect.Value {
+	for _, i := range indexes {
+		v = reflect.Indirect(v).Field(i)
+		if v.Kind() == reflect.Struct && v.IsZero() {
+			alloc := reflect.New(util.Deref(v.Type()))
+			v.Set(alloc.Elem())
+		}
+		if v.Kind() == reflect.Ptr && v.IsNil() {
+			alloc := reflect.New(util.Deref(v.Type()))
+			v.Set(alloc)
+		}
+		if v.Kind() == reflect.Map && v.IsNil() {
+			v.Set(reflect.MakeMap(v.Type()))
+		}
+	}
+	return v
+}
+
+func GetNameMapping(t reflect.Type) map[string][]int {
+	nameMapping := map[string][]int{}
 	fieldNum := t.NumField()
 	for i := 0; i < fieldNum; i++ {
 		field := t.Field(i)
-		f := NewField(&field)
-		if f.NotIgnore() {
-			name := f.AttrName()
-			if name == "" {
-				name = f.Name
+		if field.Anonymous {
+			nm := GetNameMapping(field.Type)
+			for k, v := range nm {
+				nameMapping[k] = util.InsertIntSlice(v, []int{i}, 0)
 			}
-			nameMapping[strings.ToLower(name)] = i
+		} else {
+			f := NewField(&field)
+			if f.NotIgnore() {
+				name := f.AttrName()
+				if name == "" {
+					name = f.Name
+				}
+				nameMapping[strings.ToLower(name)] = []int{i}
+			}
 		}
+
 	}
 	return nameMapping
+}
+
+func FieldMapping(t reflect.Type) map[string]*Field {
+	t = util.Deref(t)
+	mapping := map[string]*Field{}
+	fieldNum := t.NumField()
+	for i := 0; i < fieldNum; i++ {
+		field := t.Field(i)
+		if field.Anonymous {
+			fm := FieldMapping(field.Type)
+			for k, f := range fm {
+				f.Index = util.InsertIntSlice(f.Index, []int{i}, 0)
+				f.Path = field.Name + "." + f.Path
+				mapping[k] = f
+			}
+		} else {
+			f := NewField(&field)
+			f.Index = []int{i}
+			f.Path = f.Name
+			if f.NotIgnore() {
+				name := f.AttrName()
+				if name == "" {
+					name = f.Name
+				}
+				//nameMapping[strings.ToLower(name)] = f
+				mapping[name] = f
+			}
+		}
+	}
+	return mapping
 }

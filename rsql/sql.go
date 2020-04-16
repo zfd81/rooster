@@ -381,8 +381,8 @@ func StructScan(r *Rows, dest interface{}) error {
 	}
 
 	for i, column := range columns {
-		index := nameMapping[strings.ToLower(column)]
-		f := v.Field(index)
+		indexes := nameMapping[strings.ToLower(column)]
+		f := FieldByIndexes(v, indexes)
 		if !reflect.ValueOf(values[i]).Elem().IsZero() {
 			switch f.Kind() {
 			case reflect.String:

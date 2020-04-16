@@ -10,20 +10,39 @@ import (
 	"github.com/zfd81/rooster/types/container"
 )
 
-type User struct {
-	Id               int //没有注解，表示名称和数据库中的列名相同
-	Name             string
-	Password         string
-	FullName         string `rsql:"name:full_name"` //标注数据表中对应的列名称
-	Number           string
-	DepartmentId     int `rsql:"name:department_id"` //标注数据表中对应的列名称
+type MM struct {
+	TesName string `rsql:"-"` //忽略这个字段
+}
+
+type Model struct {
 	Creator          int
 	CreatedDate      time.Time `rsql:"name:created_date"` //标注数据表中对应的列名称
 	Modifier         int
 	LastmodifiedDate time.Time `rsql:"name:lastmodified_date"` //标注数据表中对应的列名称
-	Field1           string    `rsql:"-"`                      //忽略这个字段
-	Field2           int       `rsql:"-"`                      //忽略这个字段
-	Field3           time.Time `rsql:"-"`                      //忽略这个字段
+	MM
+}
+
+type User struct {
+	Id           int //没有注解，表示名称和数据库中的列名相同
+	Name         string
+	Password     string
+	FullName     string `rsql:"name:full_name"` //标注数据表中对应的列名称
+	Number       string
+	DepartmentId int       `rsql:"name:department_id"` //标注数据表中对应的列名称
+	Field1       string    `rsql:"-"`                  //忽略这个字段
+	Field2       int       `rsql:"-"`                  //忽略这个字段
+	Field3       time.Time `rsql:"-"`                  //忽略这个字段
+	Model
+}
+
+type User1 struct {
+	Id           int //没有注解，表示名称和数据库中的列名相同
+	Name         string
+	Password     string
+	FullName     string `rsql:"name:full_name"` //标注数据表中对应的列名称
+	Number       string
+	DepartmentId int `rsql:"name:department_id"` //标注数据表中对应的列名称
+	Model
 }
 
 func (u User) TableName() string {
@@ -157,7 +176,7 @@ func TestStructScan(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	u := &User{Name: "user23"}
+	u := &User1{Name: "user23"}
 	rows, _ := db.Query("select * from sys_user where name=:Name", u)
 	if rows.Next() {
 		err := StructScan(rows, u)
@@ -207,18 +226,20 @@ func TestDB_Save(t *testing.T) {
 
 	t.Log("参数为实现Modeler接口的struct类型>>>>>>>>>>>>>>>>>>>>>>>")
 	u := &User{
-		Id:               22,
-		Name:             "user22",
-		Password:         "pwd22",
-		FullName:         "用户22",
-		Number:           "num22",
-		DepartmentId:     1022,
-		Creator:          1,
-		CreatedDate:      time.Now(),
-		Modifier:         1,
-		LastmodifiedDate: time.Now(),
-		Field1:           "test",
-		Field2:           999,
+		Id:       22,
+		Name:     "user22",
+		Password: "pwd22",
+		FullName: "用户22",
+		Number:   "num22",
+		//DepartmentId: 1022,
+		Model: Model{
+			Creator:          11,
+			CreatedDate:      time.Now(),
+			Modifier:         12,
+			LastmodifiedDate: time.Now(),
+		},
+		Field1: "test",
+		Field2: 999,
 	}
 	cnt, err := db.Save(u)
 	if err != nil {
@@ -297,16 +318,18 @@ func TestDB_Exec(t *testing.T) {
 		t.Error(err)
 	}
 	u := &User{
-		Id:               26,
-		Name:             "user26",
-		Password:         "pwd26",
-		FullName:         "用户26",
-		Number:           "num26",
-		DepartmentId:     1026,
-		Creator:          1,
-		CreatedDate:      time.Now(),
-		Modifier:         1,
-		LastmodifiedDate: time.Now(),
+		Id:           26,
+		Name:         "user26",
+		Password:     "pwd26",
+		FullName:     "用户26",
+		Number:       "num26",
+		DepartmentId: 1026,
+		Model: Model{
+			Creator:          1,
+			CreatedDate:      time.Now(),
+			Modifier:         1,
+			LastmodifiedDate: time.Now(),
+		},
 	}
 	cnt, err := db.Exec("insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:CreatedDate,:LastmodifiedDate,:Name,:Number,:Password,:DepartmentId)", u)
 	if err != nil {
@@ -332,13 +355,17 @@ func TestDB_Exec_Ins(t *testing.T) {
 		t.Error(err)
 	}
 	u := &User{
-		Id:               23,
-		Name:             "user23",
-		Password:         "pwd23",
-		Number:           "num23",
-		DepartmentId:     1023,
-		CreatedDate:      time.Now(),
-		LastmodifiedDate: time.Now(),
+		Id:           23,
+		Name:         "user23",
+		Password:     "pwd23",
+		Number:       "num23",
+		DepartmentId: 1023,
+		Model: Model{
+			Creator:          1,
+			CreatedDate:      time.Now(),
+			Modifier:         1,
+			LastmodifiedDate: time.Now(),
+		},
 	}
 	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:CreatedDate,:LastmodifiedDate,:Name,:Number,:Password,:DepartmentId)"
 	cnt, err := db.Exec(sql, u)
@@ -607,32 +634,36 @@ func TestDB_BatchSave(t *testing.T) {
 
 	t.Log("参数为实现Modeler接口的struct类型>>>>>>>>>>>>>>>>>>>>>>>")
 	u1 := &User{
-		Id:               222,
-		Name:             "user222",
-		Password:         "pwd222",
-		FullName:         "用户222",
-		Number:           "num222",
-		DepartmentId:     10222,
-		Creator:          1,
-		CreatedDate:      time.Now(),
-		Modifier:         1,
-		LastmodifiedDate: time.Now(),
-		Field1:           "test",
-		Field2:           9999,
+		Id:           222,
+		Name:         "user222",
+		Password:     "pwd222",
+		FullName:     "用户222",
+		Number:       "num222",
+		DepartmentId: 10222,
+		Model: Model{
+			Creator:          1,
+			CreatedDate:      time.Now(),
+			Modifier:         1,
+			LastmodifiedDate: time.Now(),
+		},
+		Field1: "test",
+		Field2: 9999,
 	}
 	u2 := &User{
-		Id:               333,
-		Name:             "user333",
-		Password:         "pwd333",
-		FullName:         "用户333",
-		Number:           "num333",
-		DepartmentId:     10333,
-		Creator:          1,
-		CreatedDate:      time.Now(),
-		Modifier:         1,
-		LastmodifiedDate: time.Now(),
-		Field1:           "test",
-		Field2:           0000,
+		Id:           333,
+		Name:         "user333",
+		Password:     "pwd333",
+		FullName:     "用户333",
+		Number:       "num333",
+		DepartmentId: 10333,
+		Model: Model{
+			Creator:          1,
+			CreatedDate:      time.Now(),
+			Modifier:         1,
+			LastmodifiedDate: time.Now(),
+		},
+		Field1: "test",
+		Field2: 0000,
 	}
 	cnt, err := db.BatchSave([](interface{}){u1, u2})
 	if err != nil {
@@ -735,22 +766,30 @@ func TestDB_BeginTx(t *testing.T) {
 		t.Error(err)
 	}
 	u := &User{
-		Id:               29,
-		Name:             "user23",
-		Password:         "pwd23",
-		Number:           "num23",
-		DepartmentId:     1023,
-		CreatedDate:      time.Now(),
-		LastmodifiedDate: time.Now(),
+		Id:           29,
+		Name:         "user23",
+		Password:     "pwd23",
+		Number:       "num23",
+		DepartmentId: 1023,
+		Model: Model{
+			Creator:          1,
+			CreatedDate:      time.Now(),
+			Modifier:         1,
+			LastmodifiedDate: time.Now(),
+		},
 	}
 	u1 := &User{
-		Id:               239,
-		Name:             "user23",
-		Password:         "pwd23",
-		Number:           "num23",
-		DepartmentId:     1023,
-		CreatedDate:      time.Now(),
-		LastmodifiedDate: time.Now(),
+		Id:           239,
+		Name:         "user23",
+		Password:     "pwd23",
+		Number:       "num23",
+		DepartmentId: 1023,
+		Model: Model{
+			Creator:          1,
+			CreatedDate:      time.Now(),
+			Modifier:         1,
+			LastmodifiedDate: time.Now(),
+		},
 	}
 	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:CreatedDate,:LastmodifiedDate,:Name,:Number,:Password,:DepartmentId)"
 	tx, err := db.BeginTx()

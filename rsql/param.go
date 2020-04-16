@@ -4,8 +4,6 @@ import (
 	"reflect"
 
 	"github.com/zfd81/rooster/types/container"
-
-	"github.com/zfd81/rooster/util"
 )
 
 const (
@@ -115,9 +113,14 @@ func NewMapParams(params map[string]interface{}) Params {
 
 func NewStructParams(params interface{}) Params {
 	p := make(map[string]interface{})
-	util.StructIterator(params, func(index int, key string, value interface{}, field reflect.StructField) {
-		p[key] = value
-	})
+	v := reflect.ValueOf(params)
+	v = reflect.Indirect(v)
+	fm := FieldMapping(v.Type())
+	for name, field := range fm {
+		indexes := field.Index
+		f := FieldByIndexes(v, indexes)
+		p[name] = f.Interface()
+	}
 	return p
 }
 
