@@ -71,10 +71,6 @@ func NewField(field *reflect.StructField) *Field {
 func FieldByIndexes(v reflect.Value, indexes []int) reflect.Value {
 	for _, i := range indexes {
 		v = reflect.Indirect(v).Field(i)
-		//if v.Kind() == reflect.Struct && v.IsZero() {
-		//	alloc := reflect.New(util.Deref(v.Type()))
-		//	v.Set(alloc)
-		//}
 		if v.Kind() == reflect.Ptr && v.IsNil() {
 			alloc := reflect.New(util.Deref(v.Type()))
 			v.Set(alloc)
