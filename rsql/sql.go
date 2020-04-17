@@ -35,8 +35,11 @@ func (r *Rows) SliceScan() ([]interface{}, error) {
 
 // MapScan using this Rows.
 func (r *Rows) MapScan() (container.Map, error) {
-	r.Next()
-	return MapScan(r)
+	if r.Next() {
+		return MapScan(r)
+	} else {
+		return nil, nil
+	}
 }
 
 func (r *Rows) MapListScan() ([]container.Map, error) {
