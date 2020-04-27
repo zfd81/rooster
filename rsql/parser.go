@@ -13,7 +13,7 @@ import (
 )
 
 func validCharacter(char byte) bool {
-	if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 46 || char == 95 {
+	if (char >= 48 && char <= 57) || (char >= 65 && char <= 90) || (char >= 97 && char <= 122) || char == 46 || char == 95 || char == 9 || char == 10 || char == 32 {
 		return true
 	}
 	return false

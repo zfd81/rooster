@@ -367,7 +367,7 @@ func TestDB_Exec_Ins(t *testing.T) {
 			LastmodifiedDate: time.Now(),
 		},
 	}
-	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:CreatedDate,:LastmodifiedDate,:Name,:Number,:Password,:DepartmentId)"
+	sql := "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values (:Id,:created_date,:lastmodified_date,:Name,:Number,:Password,:department_id)"
 	cnt, err := db.Exec(sql, u)
 	if err != nil {
 		t.Log(err)
@@ -412,7 +412,24 @@ func TestDB_Exec_Ins(t *testing.T) {
 			"Modifier":          1,
 			"lastmodified_date": time.Now(),
 		}}
-	sql = "insert into sys_user (id,created_date,lastmodified_date,name,number,password,department_id) values {@vals[,] (:this.Id,:this.created_date,:this.lastmodified_date,:this.Name,:this.Number,:this.Password,:this.department_id)}"
+	sql = `insert into sys_user 
+			(
+				id,
+				created_date,
+				lastmodified_date,
+				name,number,
+				password,
+				department_id
+			) 
+			values 
+			{@vals[,] (
+				:this.Id,
+				:this.created_date,
+				:this.lastmodified_date,
+				:this.Name,:this.Number,
+				:this.Password,
+				:this.department_id
+	)}`
 	cnt, err = db.Exec(sql, mps)
 	if err != nil {
 		t.Log(err)

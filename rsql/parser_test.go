@@ -93,27 +93,49 @@ func Test_batchInsert(t *testing.T) {
 }
 
 func Test_foreach(t *testing.T) {
-	p := Params{}
-	ms1 := []map[string]interface{}{{"aa": 111, "bb": 222, "cc": 333}, {"aa": 111, "bb": 222, "cc": 333}}
-	p.Add("msa", ms1)
-	p.Add("msa1", 12)
-	str := "@msa[,] (:this.aa,:this.bb,:this.cc1)"
-	sql, err := foreach(str, &p)
+	//p := Params{}
+	//ms1 := []map[string]interface{}{{"aa": 111, "bb": 222, "cc": 333}, {"aa": 111, "bb": 222, "cc": 333}}
+	//p.Add("msa", ms1)
+	//p.Add("msa1", 12)
+	//str := "@msa[,] (:this.aa,:this.bb,:this.cc1)"
+	//sql, err := foreach(str, &p)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//t.Log(sql)
+	//t.Log(p)
+	//
+	//ms2 := []string{"11", "22", "33"}
+	//p.Add("msb", ms2)
+	//str = "@msb[,] :this.val"
+	//sql, err = foreach(str, &p)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//t.Log(sql)
+	//t.Log(p)
+	//
+	ms3 := []map[string]interface{}{{
+		"id":   "aaa",
+		"code": "bbb",
+		"uid":  "ccc",
+		"t":    "ddd",
+	}}
+	sql := `
+{@vals[,] (
+		:this.id,
+		:this.code,
+		:this.uid ,
+		:this.t
+) }`
+	pp := NewParams(ms3)
+	sql, err := foreach(sql, &pp)
 	if err != nil {
-		t.Error(err)
+		t.Error("err:", err)
+	} else {
+		t.Log(sql)
 	}
-	t.Log(sql)
-	t.Log(p)
 
-	ms2 := []string{"11", "22", "33"}
-	p.Add("msb", ms2)
-	str = "@msb[,] :this.val"
-	sql, err = foreach(str, &p)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(sql)
-	t.Log(p)
 }
 
 func Test_validCharacter(t *testing.T) {
