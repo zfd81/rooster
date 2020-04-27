@@ -2,6 +2,9 @@ package rsql
 
 import (
 	"testing"
+	"time"
+
+	"github.com/zfd81/rooster/types/container"
 )
 
 func Test_bindParams(t *testing.T) {
@@ -115,19 +118,22 @@ func Test_foreach(t *testing.T) {
 	//t.Log(sql)
 	//t.Log(p)
 	//
-	ms3 := []map[string]interface{}{{
-		"id":   "aaa",
+	ms3 := []container.JsonMap{}
+	ms3 = append(ms3, container.JsonMap{
+		"id":   123456,
 		"code": "bbb",
 		"uid":  "ccc",
-		"t":    "ddd",
-	}}
+		"t":    time.Now(),
+	})
 	sql := `
-{@vals[,] (
-		:this.id,
-		:this.code,
-		:this.uid ,
-		:this.t
-) }`
+@vals [,] (
+				:this.id,
+				:this.code ,
+				:this.uid ,
+				:this.t
+			)
+
+`
 	pp := NewParams(ms3)
 	sql, err := foreach(sql, &pp)
 	if err != nil {

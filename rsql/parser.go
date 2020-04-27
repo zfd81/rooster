@@ -73,14 +73,14 @@ func foreach(script string, arg *Params) (string, error) {
 	length := v.Len()
 	var sql bytes.Buffer
 	for index := 0; index < length; index++ {
-		item := v.Index(index)
+		item := reflect.Indirect(v.Index(index))
 		fragment, err := util.ReplaceByKeyword(content, ':', func(i int, s int, e int, c string) (string, error) {
 			if strings.HasPrefix(c, "this.") {
 				key := c[5:]
 				if key == "val" {
 					arg.Add(fmt.Sprintf("%s.%s%d", name, c, index), item.Interface())
 				} else {
-					value := item.MapIndex(reflect.ValueOf(c[5:]))
+					value := item.MapIndex(reflect.ValueOf(key))
 					if value.IsValid() {
 						arg.Add(fmt.Sprintf("%s.%s%d", name, c, index), value.Interface())
 					} else {
