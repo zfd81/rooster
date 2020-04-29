@@ -239,11 +239,11 @@ func (db *DB) BatchSave(arg []interface{}, table ...string) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	db.logger.Debug(log(sql, params)...)
 	stmt, err := db.Prepare(sql)
 	if err != nil {
 		return -1, err
 	}
-	db.logger.Debug(log(sql, params)...)
 	res, err := stmt.Exec(params...)
 	if err != nil {
 		return -1, err
@@ -257,11 +257,11 @@ func (db *DB) Exec(query string, arg interface{}) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	db.logger.Debug(log(sql, params)...)
 	stmt, err := db.Prepare(sql)
 	if err != nil {
 		return -1, err
 	}
-	db.logger.Debug(log(sql, params)...)
 	res, err := stmt.Exec(params...)
 	if err != nil {
 		return -1, err
