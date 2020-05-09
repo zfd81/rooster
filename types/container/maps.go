@@ -129,7 +129,7 @@ func (m JsonMap) Get(key interface{}) (value interface{}, found bool) {
 func (m JsonMap) GetString(key interface{}) string {
 	value, found := m.Get(key)
 	if found {
-		return value.(string)
+		return cast.ToString(value)
 	}
 	return ""
 }
@@ -137,11 +137,7 @@ func (m JsonMap) GetString(key interface{}) string {
 func (m JsonMap) GetInt(key interface{}) int {
 	value, found := m.Get(key)
 	if found {
-		v, ok := value.(int64)
-		if ok {
-			return int(v)
-		}
-		return value.(int)
+		return cast.ToInt(value)
 	}
 	return 0
 }
@@ -149,7 +145,7 @@ func (m JsonMap) GetInt(key interface{}) int {
 func (m JsonMap) GetFloat(key interface{}) float64 {
 	value, found := m.Get(key)
 	if found {
-		return value.(float64)
+		return cast.ToFloat64(value)
 	}
 	return 0
 }
@@ -157,7 +153,7 @@ func (m JsonMap) GetFloat(key interface{}) float64 {
 func (m JsonMap) GetBool(key interface{}) bool {
 	value, found := m.Get(key)
 	if found {
-		return value.(bool)
+		return cast.ToBool(value)
 	}
 	return false
 }
