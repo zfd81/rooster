@@ -1,8 +1,17 @@
 package conf
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/spf13/viper"
+)
 
 const (
+	ConfigName = "rooster"
+	ConfigType = "yaml"
+	ConfigPath = "."
+
 	MySql      string = "mysql"
 	Oracle     string = "oracle"
 	PostgreSQL string = "PostgreSQL"
@@ -11,16 +20,11 @@ const (
 type Config struct {
 	Name     string              `mapstructure:"name"`
 	Version  string              `mapstructure:"version"`
-	Http     Http                `mapstructure:"http"`
 	Pagesqls map[string]*PageSql `mapstructure:"pagesqls"`
 }
 
 func (c *Config) PageSql(driverName string, sql string) string {
 	return c.Pagesqls[driverName].Sql(sql)
-}
-
-type Http struct {
-	Port int `mapstructure:"port"`
 }
 
 type PageSql struct {
@@ -34,9 +38,6 @@ func (p *PageSql) Sql(sql string) string {
 var defaultConf = Config{
 	Name:    "Rooster",
 	Version: "1.0.0",
-	Http: Http{
-		Port: 8143,
-	},
 	Pagesqls: map[string]*PageSql{
 		MySql: &PageSql{
 			"select * from ($sql) _init limit ${(_pageNumber - 1) * _pageSize} , ${_pageSize}",
@@ -51,6 +52,17 @@ var defaultConf = Config{
 }
 
 var globalConf = defaultConf
+
+func init() {
+	viper.SetConfigName(ConfigName)
+	viper.SetConfigType(ConfigType)
+	viper.AddConfigPath(ConfigPath)
+	if err := viper.ReadInConfig(); err == nil {
+		if err = viper.Unmarshal(&globalConf); err != nil {
+			panic(fmt.Errorf("Fatal error when reading %s config, unable to decode into struct, %v", ConfigName, err))
+		}
+	}
+}
 
 func GetGlobalConfig() *Config {
 	return &globalConf
