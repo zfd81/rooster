@@ -160,5 +160,6 @@ func (entry *Entry) Errorf(format string, args ...interface{}) {
 func NewEntry(logger *Logger) *Entry {
 	return &Entry{
 		Logger: logger,
+		Data:   make(Fields, 6),
 	}
 }
