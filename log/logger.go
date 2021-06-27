@@ -3,7 +3,11 @@ package log
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 )
+
+// Fields type, used to pass to `WithFields`.
+type Fields map[string]interface{}
 
 type Level uint32
 
@@ -81,6 +85,24 @@ func (logger *Logger) SetFormatter(formatter Formatter) {
 	logger.mu.Lock()
 	defer logger.mu.Unlock()
 	logger.Formatter = formatter
+}
+
+func (logger *Logger) releaseEntry(entry *Entry) {
+	entry.Data = map[string]interface{}{}
+}
+
+// WithField allocates a new entry and adds a field to it.
+func (logger *Logger) WithField(key string, value interface{}) *Entry {
+	entry := logger.newEntry()
+	defer logger.releaseEntry(entry)
+	return entry.WithField(key, value)
+}
+
+// Overrides the time of the log entry.
+func (logger *Logger) WithTime(t time.Time) *Entry {
+	entry := logger.newEntry()
+	defer logger.releaseEntry(entry)
+	return entry.WithTime(t)
 }
 
 func (logger *Logger) Trace(args ...interface{}) {

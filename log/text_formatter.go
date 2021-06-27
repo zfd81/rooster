@@ -2,6 +2,8 @@ package log
 
 import (
 	"bytes"
+
+	"github.com/spf13/cast"
 )
 
 type TextFormatter struct {
@@ -41,7 +43,25 @@ func (f *TextFormatter) Format(entry *Entry) ([]byte, error) {
 	}
 	b.WriteString("[")
 	b.WriteString(entry.Time.Format(timestampFormat))
-	b.WriteString("] ")
+	b.WriteString("]")
+	if len(entry.Data) > 0 {
+		b.WriteString("{")
+	}
+	cnt := 0
+	for k, v := range entry.Data {
+		if cnt > 0 {
+			b.WriteString(",")
+		} else {
+			cnt++
+		}
+		b.WriteString(k)
+		b.WriteString("=")
+		b.WriteString(cast.ToString(v))
+	}
+	if len(entry.Data) > 0 {
+		b.WriteString("}")
+	}
+	b.WriteString(" ")
 	b.WriteString(entry.Message)
 	b.WriteByte('\n')
 	return b.Bytes(), nil

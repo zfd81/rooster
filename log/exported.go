@@ -1,5 +1,7 @@
 package log
 
+import "time"
+
 var (
 	// std is the name of the standard logger in stdlib `log`
 	std = New()
@@ -32,6 +34,14 @@ func GetLevel() Level {
 // IsLevelEnabled checks if the log level of the standard logger is greater than the level param
 func IsLevelEnabled(level Level) bool {
 	return std.IsLevelEnabled(level)
+}
+
+func WithField(key string, value interface{}) *Entry {
+	return std.WithField(key, value)
+}
+
+func WithTime(t time.Time) *Entry {
+	return std.WithTime(t)
 }
 
 // Trace logs a message at level Trace on the standard logger.

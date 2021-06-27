@@ -501,6 +501,6 @@ func pagesql(driverName string, sql string, pageNumber int, pageSize int) (strin
 }
 
 func sqllog(sql string, params []interface{}) (messages []interface{}) {
-	messages = append([]interface{}{"\r\n", sql, "\r\n", "\tparams:"}, params)
+	messages = append([]interface{}{sql, "\r\n", "\tparams:"}, params)
 	return
 }
