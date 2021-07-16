@@ -27,6 +27,7 @@ type Rows struct {
 
 // SliceScan using this Rows.
 func (r *Rows) SliceScan() ([]interface{}, error) {
+	defer r.Close()
 	if r.Next() {
 		return SliceScan(r)
 	}
@@ -35,6 +36,7 @@ func (r *Rows) SliceScan() ([]interface{}, error) {
 
 // MapScan using this Rows.
 func (r *Rows) MapScan() (container.Map, error) {
+	defer r.Close()
 	if r.Next() {
 		return MapScan(r)
 	} else {
@@ -43,11 +45,13 @@ func (r *Rows) MapScan() (container.Map, error) {
 }
 
 func (r *Rows) MapListScan() ([]container.Map, error) {
+	defer r.Close()
 	return MapListScan(r)
 }
 
 // StructScan a single Row into dest.
 func (r *Rows) StructScan(dest interface{}) error {
+	defer r.Close()
 	if r.Next() {
 		return StructScan(r, dest)
 	}
@@ -55,6 +59,7 @@ func (r *Rows) StructScan(dest interface{}) error {
 }
 
 func (r *Rows) StructListScan(list interface{}) error {
+	defer r.Close()
 	return StructListScan(r, list)
 }
 
@@ -126,6 +131,7 @@ func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
 
 func (db *DB) QuerySlice(query string, arg interface{}) ([]interface{}, error) {
 	rows, err := db.Query(query, arg)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +140,7 @@ func (db *DB) QuerySlice(query string, arg interface{}) ([]interface{}, error) {
 
 func (db *DB) QueryMap(query string, arg interface{}) (container.Map, error) {
 	rows, err := db.Query(query, arg)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +153,7 @@ func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSi
 		return nil, err
 	}
 	rows, err := db.Query(sql, arg)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +162,7 @@ func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSi
 
 func (db *DB) QueryStruct(dest interface{}, query string, arg interface{}) error {
 	rows, err := db.Query(query, arg)
+	defer rows.Close()
 	if err != nil {
 		return err
 	}
@@ -166,6 +175,7 @@ func (db *DB) QueryStructList(list interface{}, query string, arg interface{}, p
 		return err
 	}
 	rows, err := db.Query(sql, arg)
+	defer rows.Close()
 	if err != nil {
 		return err
 	}
@@ -178,6 +188,7 @@ func (db *DB) QueryCount(query string, arg interface{}) (int, error) {
 	sql.WriteString(query)
 	sql.WriteString(") roosterCountTable")
 	rows, err := db.Query(sql.String(), arg)
+	defer rows.Close()
 	if err != nil {
 		return 0, err
 	}
