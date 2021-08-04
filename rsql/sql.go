@@ -131,7 +131,7 @@ func (db *DB) Query(query string, arg interface{}) (*Rows, error) {
 
 func (db *DB) QuerySlice(query string, arg interface{}) ([]interface{}, error) {
 	rows, err := db.Query(query, arg)
-	defer rows.Close()
+	defer closeRows(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (db *DB) QuerySlice(query string, arg interface{}) ([]interface{}, error) {
 
 func (db *DB) QueryMap(query string, arg interface{}) (container.Map, error) {
 	rows, err := db.Query(query, arg)
-	defer rows.Close()
+	defer closeRows(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSi
 		return nil, err
 	}
 	rows, err := db.Query(sql, arg)
-	defer rows.Close()
+	defer closeRows(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSi
 
 func (db *DB) QueryStruct(dest interface{}, query string, arg interface{}) error {
 	rows, err := db.Query(query, arg)
-	defer rows.Close()
+	defer closeRows(rows)
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (db *DB) QueryStructList(list interface{}, query string, arg interface{}, p
 		return err
 	}
 	rows, err := db.Query(sql, arg)
-	defer rows.Close()
+	defer closeRows(rows)
 	if err != nil {
 		return err
 	}
@@ -188,7 +188,7 @@ func (db *DB) QueryCount(query string, arg interface{}) (int, error) {
 	sql.WriteString(query)
 	sql.WriteString(") roosterCountTable")
 	rows, err := db.Query(sql.String(), arg)
-	defer rows.Close()
+	defer closeRows(rows)
 	if err != nil {
 		return 0, err
 	}
@@ -514,4 +514,10 @@ func pagesql(driverName string, sql string, pageNumber int, pageSize int) (strin
 func sqllog(sql string, params []interface{}) (messages []interface{}) {
 	messages = append([]interface{}{sql, "\r\n", "\tparams:"}, params)
 	return
+}
+
+func closeRows(rows *Rows) {
+	if rows != nil {
+		rows.Close()
+	}
 }
