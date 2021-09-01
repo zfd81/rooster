@@ -17,36 +17,40 @@ func Test_bindParams(t *testing.T) {
 	}
 	t.Log(str)
 	t.Log(params)
-
+	str1 := "$index"
+	if str1 == "$index" {
+		t.Log("==========")
+	}
 	ms1 := []map[string]interface{}{{"aa": 111, "bb": 222, "cc": 333}, {"aa": 444, "bb": 555, "cc": 666}}
 	param.Add("msa", ms1)
 	param.Add("msa1", 12)
-	str = "insert into tbale (name,pwd,age) values {@msa[,] (:Name,:this.bb,:this.cc)}"
+	str = "insert into tbale (name,pwd,age,seq ) values {@msa[,] (:Name,:this.bb,:this.cc,:this.$index)}"
 	sql, params, err := bindParams(str, param)
 	if err != nil {
 		t.Error(err)
 	}
 	t.Log(sql)
 	t.Log(params)
-
-	ms2 := []string{"11", "22", "33"}
-	param.Add("msb", ms2)
-	str = "select * from tbale where name in ({@msb[,] :this.val})"
-	sql, params, err = bindParams(str, param)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(sql)
-	t.Log(params)
-
-	p := NewParams(ms2)
-	str = "select * from tbale where name in ({@vals[,] :this.val})"
-	sql, params, err = bindParams(str, p)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(sql)
-	t.Log(params)
+	//t.Log(params)
+	//
+	//ms2 := []string{"11", "22", "33"}
+	//param.Add("msb", ms2)
+	//str = "select * from tbale where name in ({@msb[,] :this.val})"
+	//sql, params, err = bindParams(str, param)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//t.Log(sql)
+	//t.Log(params)
+	//
+	//p := NewParams(ms2)
+	//str = "select * from tbale where name in ({@vals[,] :this.val})"
+	//sql, params, err = bindParams(str, p)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//t.Log(sql)
+	//t.Log(params)
 }
 
 func Test_insert(t *testing.T) {

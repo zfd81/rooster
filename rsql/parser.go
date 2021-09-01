@@ -79,6 +79,8 @@ func foreach(script string, arg *Params) (string, error) {
 				key := c[5:]
 				if key == "val" {
 					arg.Add(fmt.Sprintf("%s.%s%d", name, c, index), item.Interface())
+				} else if key == "$index" {
+					arg.Add(fmt.Sprintf("%s.%s%d", name, c, index), index)
 				} else {
 					value := item.MapIndex(reflect.ValueOf(key))
 					if value.IsValid() {
