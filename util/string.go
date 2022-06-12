@@ -36,6 +36,42 @@ func Right(str string, length int) string {
 	}
 }
 
+func Lpad(str string, length int, padstr string) string {
+	if str == "" || length < 0 {
+		return str
+	}
+	strRune := []rune(str)
+	var len = length - len(strRune)
+	if len > 0 {
+		for i := 0; i < len; i++ {
+			str = padstr + str
+		}
+		return str
+	} else if len == 0 {
+		return str
+	} else {
+		return string(strRune[0:length])
+	}
+}
+
+func Rpad(str string, length int, padstr string) string {
+	if str == "" || length < 0 {
+		return str
+	}
+	strRune := []rune(str)
+	var len = length - len(strRune)
+	if len > 0 {
+		for i := 0; i < len; i++ {
+			str = str + padstr
+		}
+		return str
+	} else if len == 0 {
+		return str
+	} else {
+		return string(strRune[0:length])
+	}
+}
+
 func Substr(str string, beginIndex int, endIndex int) (string, error) {
 	if str == "" {
 		return "", nil
