@@ -44,7 +44,7 @@ func (r *Rows) MapScan() (map[string]interface{}, error) {
 	}
 }
 
-func (r *Rows) MapListScan() ([]container.Map, error) {
+func (r *Rows) MapListScan() ([]map[string]interface{}, error) {
 	defer r.Close()
 	return MapListScan(r)
 }
@@ -156,7 +156,7 @@ func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, e
 	return rows.MapScan()
 }
 
-func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]container.Map, error) {
+func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]map[string]interface{}, error) {
 	sql, err := pagesql(db.driverName, query, pageNumber, pageSize)
 	if err != nil {
 		return nil, err
@@ -349,8 +349,8 @@ func MapScan(r *Rows) (map[string]interface{}, error) {
 	return m.Map(), r.Err()
 }
 
-func MapListScan(r *Rows) ([]container.Map, error) {
-	l := make([]container.Map, 0, 10)
+func MapListScan(r *Rows) ([]map[string]interface{}, error) {
+	l := make([]map[string]interface{}, 0, 10)
 	columns, err := r.ColumnTypes()
 	if err != nil {
 		return l, err
@@ -368,7 +368,7 @@ func MapListScan(r *Rows) ([]container.Map, error) {
 		for i, column := range columns {
 			m.Put(column.Name(), value(column.ScanType(), values[i]))
 		}
-		l = append(l, m)
+		l = append(l, m.Map())
 	}
 	return l, r.Err()
 }
