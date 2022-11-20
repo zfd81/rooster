@@ -3,6 +3,7 @@ package rsql
 import (
 	"bytes"
 	"fmt"
+	"github.com/spf13/cast"
 	"reflect"
 	"strings"
 
@@ -19,7 +20,12 @@ func validCharacter(char byte) bool {
 	return false
 }
 
-func foreach(script string, arg *Params) (string, error) {
+func foreach(script string, arg *Params) (s string, e error) {
+	defer func() {
+		if r := recover(); r != nil {
+			e = fmt.Errorf(cast.ToString(r))
+		}
+	}()
 	start := 0      //切片名称开始位置
 	end := 0        //切片名称结束位置
 	open := 0       //[方括号开始位置
