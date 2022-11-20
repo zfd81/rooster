@@ -35,7 +35,7 @@ func (r *Rows) SliceScan() ([]interface{}, error) {
 }
 
 // MapScan using this Rows.
-func (r *Rows) MapScan() (container.Map, error) {
+func (r *Rows) MapScan() (map[string]interface{}, error) {
 	defer r.Close()
 	if r.Next() {
 		return MapScan(r)
@@ -147,7 +147,7 @@ func (db *DB) QuerySlice(query string, arg interface{}) ([]interface{}, error) {
 	return rows.SliceScan()
 }
 
-func (db *DB) QueryMap(query string, arg interface{}) (container.Map, error) {
+func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, error) {
 	rows, err := db.Query(query, arg)
 	defer closeRows(rows)
 	if err != nil {
@@ -329,7 +329,7 @@ func SliceScan(r *Rows) ([]interface{}, error) {
 	return values, r.Err()
 }
 
-func MapScan(r *Rows) (container.Map, error) {
+func MapScan(r *Rows) (map[string]interface{}, error) {
 	m := container.JsonMap{}
 	columns, err := r.ColumnTypes()
 	if err != nil {
@@ -346,7 +346,7 @@ func MapScan(r *Rows) (container.Map, error) {
 	for i, column := range columns {
 		m.Put(column.Name(), value(column.ScanType(), values[i]))
 	}
-	return m, r.Err()
+	return m.Map(), r.Err()
 }
 
 func MapListScan(r *Rows) ([]container.Map, error) {
