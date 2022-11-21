@@ -2,10 +2,9 @@ package rsql
 
 import (
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"testing"
 	"time"
-
-	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/zfd81/rooster/types/container"
 )
@@ -86,17 +85,17 @@ func TestDB_Query(t *testing.T) {
 	}
 
 	t.Log("查询参数为map类型>>>>>>>>>>>>>>>>>>>>>>>")
-	mp := make(map[string]interface{})
-	mp["Name"] = "admin"
-	rows, _ = db.Query("select * from sys_user where name=:Name", mp)
-	m, err := rows.MapScan()
-	if err != nil {
-		t.Error(err)
-	}
-	for i, k := range m.Keys() {
-		v, _ := m.Get(k)
-		t.Log(i, k, v)
-	}
+	//mp := make(map[string]interface{})
+	//mp["Name"] = "admin"
+	//rows, _ = db.Query("select * from sys_user where name=:Name", mp)
+	//m, err := rows.MapScan()
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//for i, k := range m.Keys() {
+	//	v, _ := m.Get(k)
+	//	t.Log(i, k, v)
+	//}
 
 	t.Log("查询参数为struct类型>>>>>>>>>>>>>>>>>>>>>>>")
 	u := &User{Name: "admin"}
@@ -136,20 +135,20 @@ func TestDB_Query(t *testing.T) {
 }
 
 func TestMapScan(t *testing.T) {
-	db, err := Open("mysql", dsn)
-	if err != nil {
-		t.Error(err)
-	}
-	p := make(Params)
-	p.Add("Name", "admin")
-	rows, _ := db.Query("select * from sys_user where name=:Name", p)
-	if rows.Next() {
-		m, _ := MapScan(rows)
-		for i, k := range m.Keys() {
-			v, _ := m.Get(k)
-			t.Log(i, k, v)
-		}
-	}
+	//db, err := Open("mysql", dsn)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//p := make(Params)
+	//p.Add("Name", "admin")
+	//rows, _ := db.Query("select * from sys_user where name=:Name", p)
+	//if rows.Next() {
+	//	m, _ := MapScan(rows)
+	//	for i, k := range m.Keys() {
+	//		v, _ := m.Get(k)
+	//		t.Log(i, k, v)
+	//	}
+	//}
 }
 
 func TestSliceScan(t *testing.T) {
@@ -204,18 +203,18 @@ func TestStructListScan(t *testing.T) {
 }
 
 func TestMapListScan(t *testing.T) {
-	db, err := Open("mysql", dsn)
-	if err != nil {
-		t.Error(err)
-	}
-	rows, _ := db.Query("select * from sys_user", nil)
-	l, _ := MapListScan(rows)
-	for _, m := range l {
-		for i, k := range m.Keys() {
-			v, _ := m.Get(k)
-			t.Log(i, k, v)
-		}
-	}
+	//db, err := Open("mysql", dsn)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//rows, _ := db.Query("select * from sys_user", nil)
+	//l, _ := MapListScan(rows)
+	//for _, m := range l {
+	//	for i, k := range m.Keys() {
+	//		v, _ := m.Get(k)
+	//		t.Log(i, k, v)
+	//	}
+	//}
 }
 
 func TestDB_Save(t *testing.T) {
@@ -530,33 +529,33 @@ func TestDB_QueryForSlice(t *testing.T) {
 }
 
 func TestDB_QueryForMap(t *testing.T) {
-	db, err := Open("mysql", dsn)
-	if err != nil {
-		t.Error(err)
-	}
+	//db, err := Open("mysql", dsn)
+	//if err != nil {
+	//	t.Error(err)
+	//}
 
 	//Map作为参数查询
 	mp := make(map[string]interface{})
 	mp["Name"] = "admin"
-	m, err := db.QueryMap("select * from sys_user where name=:Name", mp)
-	if err != nil {
-		t.Error(err)
-	}
-	for i, k := range m.Keys() {
-		v, _ := m.Get(k)
-		t.Log(i, k, v)
-	}
+	//m, err := db.QueryMap("select * from sys_user where name=:Name", mp)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//for i, k := range m.Keys() {
+	//	v, _ := m.Get(k)
+	//	t.Log(i, k, v)
+	//}
 
 	t.Log("---------------------------------------------------------------")
 
 	//单一参数查询
-	m, err = db.QueryMap("select * from sys_user where name=:val", "tester")
-	if err != nil {
-		t.Error(err)
-	}
-	for i, k := range m.Keys() {
-		t.Log(i, k)
-	}
+	//m, err = db.QueryMap("select * from sys_user where name=:val", "tester")
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//for i, k := range m.Keys() {
+	//	t.Log(i, k)
+	//}
 }
 
 func TestDB_QueryForMapList(t *testing.T) {
@@ -828,4 +827,18 @@ func TestDB_BeginTx(t *testing.T) {
 	}
 	tx.Commit()
 	//tx.Rollback()
+}
+
+func TestDB_Read(t *testing.T) {
+	db, err := Open("mysql", dsn)
+	if err != nil {
+		t.Error(err)
+	}
+	err = db.Read("select * from sys_user where name like :val", "%2%", func(row map[string]interface{}) bool {
+		t.Log(row["name"])
+		return false
+	})
+	if err != nil {
+		t.Error(err)
+	}
 }

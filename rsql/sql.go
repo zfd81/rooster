@@ -156,6 +156,50 @@ func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, e
 	return rows.MapScan()
 }
 
+// handler的返回值为退出标识:true退出，false继续
+func (db *DB) Read(query string, arg interface{}, handler func(row map[string]interface{}) bool) error {
+	rows, err := db.Query(query, arg)
+	defer closeRows(rows)
+	if err != nil {
+		return err
+	}
+
+	columns, err := rows.ColumnTypes()
+	if err != nil {
+		return err
+	}
+
+	dataStream := make(chan map[string]interface{}, 2000)
+	go func() {
+		defer close(dataStream)
+		for rows.Next() {
+			m := container.JsonMap{}
+			values := make([]interface{}, len(columns))
+			for i := range values {
+				values[i] = new(interface{})
+			}
+			err = rows.Scan(values...)
+			if err != nil {
+				return
+			}
+			for i, column := range columns {
+				m.Put(column.Name(), value(column.ScanType(), values[i]))
+			}
+			dataStream <- m
+		}
+	}()
+
+	for row := range dataStream {
+		if err != nil {
+			return err
+		}
+		if handler(row) {
+			return nil
+		}
+	}
+	return err
+}
+
 func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]map[string]interface{}, error) {
 	sql, err := pagesql(db.driverName, query, pageNumber, pageSize)
 	if err != nil {
