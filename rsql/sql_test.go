@@ -3,6 +3,7 @@ package rsql
 import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"io"
 	"testing"
 	"time"
 
@@ -834,9 +835,14 @@ func TestDB_Read(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Read("select * from sys_user where name like :val", "%2%", func(row map[string]interface{}) bool {
+	cnt := 0
+	err = db.Read("select * from sys_user where name like :val", "%2%", func(row map[string]interface{}) error {
+		if cnt == 3 {
+			return io.EOF //退出数据读取
+		}
 		t.Log(row["name"])
-		return false
+		cnt++
+		return nil
 	})
 	if err != nil {
 		t.Error(err)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"errors"
+	"io"
 	"reflect"
 	"strings"
 	"time"
@@ -156,8 +157,8 @@ func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, e
 	return rows.MapScan()
 }
 
-// handler的返回值为退出标识:true退出，false继续
-func (db *DB) Read(query string, arg interface{}, handler func(row map[string]interface{}) bool) error {
+// handler的返回值为io.EOF退出数据读取
+func (db *DB) Read(query string, arg interface{}, handler func(row map[string]interface{}) error) error {
 	rows, err := db.Query(query, arg)
 	defer closeRows(rows)
 	if err != nil {
@@ -193,7 +194,8 @@ func (db *DB) Read(query string, arg interface{}, handler func(row map[string]in
 		if err != nil {
 			return err
 		}
-		if handler(row) {
+		err = handler(row)
+		if err == io.EOF {
 			return nil
 		}
 	}
