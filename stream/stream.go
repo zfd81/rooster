@@ -5,21 +5,16 @@ import (
 	"sync"
 )
 
-const (
-	defaultWorkers = 16
-	minWorkers     = 1
-)
-
 type PlaceholderType = struct{}
 
 var Placeholder PlaceholderType
 
-type rxOptions struct {
-	unlimitedWorkers bool
-	workers          int
+// drain drains the given channel.
+func drain(channel <-chan interface{}) {
+	for range channel {
+	}
 }
 
-// A Stream is a stream that can be used to do stream processing.
 type Stream struct {
 	source <-chan interface{}
 }
@@ -60,8 +55,6 @@ func Range(source <-chan interface{}) Stream {
 }
 
 // AllMach returns whether all elements of this stream match the provided predicate.
-// May not evaluate the predicate on all elements if not necessary for determining the result.
-// If the stream is empty then true is returned and the predicate is not evaluated.
 func (s Stream) AllMach(predicate func(item interface{}) bool) bool {
 	for item := range s.source {
 		if !predicate(item) {
@@ -75,8 +68,6 @@ func (s Stream) AllMach(predicate func(item interface{}) bool) bool {
 }
 
 // AnyMach returns whether any elements of this stream match the provided predicate.
-// May not evaluate the predicate on all elements if not necessary for determining the result.
-// If the stream is empty then false is returned and the predicate is not evaluated.
 func (s Stream) AnyMach(predicate func(item interface{}) bool) bool {
 	for item := range s.source {
 		if predicate(item) {
@@ -90,7 +81,6 @@ func (s Stream) AnyMach(predicate func(item interface{}) bool) bool {
 }
 
 // Buffer buffers the items into a queue with size n.
-// It can balance the producer and the consumer if their processing throughput don't match.
 func (s Stream) Buffer(n int) Stream {
 	if n < 0 {
 		n = 0
@@ -282,8 +272,6 @@ func (s Stream) Merge() Stream {
 }
 
 // NoneMatch returns whether all elements of this stream don't match the provided predicate.
-// May not evaluate the predicate on all elements if not necessary for determining the result.
-// If the stream is empty then true is returned and the predicate is not evaluated.
 func (s Stream) NoneMatch(predicate func(item interface{}) bool) bool {
 	for item := range s.source {
 		if predicate(item) {
@@ -473,45 +461,4 @@ func (s Stream) walkUnlimited(fn WalkFunc, option *rxOptions) Stream {
 	}()
 
 	return Range(pipe)
-}
-
-// UnlimitedWorkers lets the caller use as many workers as the tasks.
-func UnlimitedWorkers() Option {
-	return func(opts *rxOptions) {
-		opts.unlimitedWorkers = true
-	}
-}
-
-// WithWorkers lets the caller customize the concurrent workers.
-func WithWorkers(workers int) Option {
-	return func(opts *rxOptions) {
-		if workers < minWorkers {
-			opts.workers = minWorkers
-		} else {
-			opts.workers = workers
-		}
-	}
-}
-
-// buildOptions returns a rxOptions with given customizations.
-func buildOptions(opts ...Option) *rxOptions {
-	options := newOptions()
-	for _, opt := range opts {
-		opt(options)
-	}
-
-	return options
-}
-
-// drain drains the given channel.
-func drain(channel <-chan interface{}) {
-	for range channel {
-	}
-}
-
-// newOptions returns a default rxOptions.
-func newOptions() *rxOptions {
-	return &rxOptions{
-		workers: defaultWorkers,
-	}
 }
