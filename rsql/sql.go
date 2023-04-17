@@ -64,6 +64,46 @@ func (r *Rows) StructListScan(list interface{}) error {
 	return StructListScan(r, list)
 }
 
+func (r *Rows) Read(handler func(row map[string]interface{}) error) error {
+	defer r.Close()
+
+	columns, err := r.ColumnTypes()
+	if err != nil {
+		return err
+	}
+
+	dataStream := make(chan map[string]interface{}, 2000)
+	go func() {
+		defer close(dataStream)
+		for r.Next() {
+			m := container.JsonMap{}
+			values := make([]interface{}, len(columns))
+			for i := range values {
+				values[i] = new(interface{})
+			}
+			err = r.Scan(values...)
+			if err != nil {
+				return
+			}
+			for i, column := range columns {
+				m.Put(column.Name(), value(column.ScanType(), values[i]))
+			}
+			dataStream <- m
+		}
+	}()
+
+	for row := range dataStream {
+		if err != nil {
+			return err
+		}
+		err = handler(row)
+		if err == io.EOF {
+			return nil
+		}
+	}
+	return err
+}
+
 type Tx struct {
 	*sql.Tx
 	driverName string
@@ -160,46 +200,10 @@ func (db *DB) QueryMap(query string, arg interface{}) (map[string]interface{}, e
 // handler的返回值为io.EOF退出数据读取
 func (db *DB) Read(query string, arg interface{}, handler func(row map[string]interface{}) error) error {
 	rows, err := db.Query(query, arg)
-	defer closeRows(rows)
 	if err != nil {
 		return err
 	}
-
-	columns, err := rows.ColumnTypes()
-	if err != nil {
-		return err
-	}
-
-	dataStream := make(chan map[string]interface{}, 2000)
-	go func() {
-		defer close(dataStream)
-		for rows.Next() {
-			m := container.JsonMap{}
-			values := make([]interface{}, len(columns))
-			for i := range values {
-				values[i] = new(interface{})
-			}
-			err = rows.Scan(values...)
-			if err != nil {
-				return
-			}
-			for i, column := range columns {
-				m.Put(column.Name(), value(column.ScanType(), values[i]))
-			}
-			dataStream <- m
-		}
-	}()
-
-	for row := range dataStream {
-		if err != nil {
-			return err
-		}
-		err = handler(row)
-		if err == io.EOF {
-			return nil
-		}
-	}
-	return err
+	return rows.Read(handler)
 }
 
 func (db *DB) QueryMapList(query string, arg interface{}, pageNumber int, pageSize int) ([]map[string]interface{}, error) {
